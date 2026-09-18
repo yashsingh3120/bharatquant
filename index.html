@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BharatQuant — AI Stock Prediction Dashboard</title>
+  <meta name="description" content="Real-time NSE stock prediction dashboard powered by XGBoost machine learning models. Track NIFTY50 stocks with AI-driven BUY/SELL/HOLD signals.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+            <polyline points="16 7 22 7 22 13"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1>BharatQuant</h1>
+          <span class="tagline">AI-Powered Predictions</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="market-ticker" id="marketTicker">
+          <div class="ticker-item">
+            <span class="ticker-label">NIFTY 50</span>
+            <span class="ticker-value" id="niftyPrice">—</span>
+            <span class="ticker-change" id="niftyChange">—</span>
+          </div>
+          <div class="ticker-item">
+            <span class="ticker-label">BANK NIFTY</span>
+            <span class="ticker-value" id="bankniftyPrice">—</span>
+            <span class="ticker-change" id="bankniftyChange">—</span>
+          </div>
+          <div class="ticker-item">
+            <span class="ticker-label">INDIA VIX</span>
+            <span class="ticker-value" id="vixPrice">—</span>
+            <span class="ticker-change" id="vixChange">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="market-clock" id="marketClock">--:--:--</div>
+        <div class="market-status" id="marketStatus">
+          <span class="status-dot"></span>
+          <span class="status-text">—</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ CONTROLS ============ -->
+  <div class="controls">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="search" id="searchInput" placeholder="Search stocks... (e.g. RELIANCE, INFY)" aria-label="Search stocks">
+    </div>
+    <div class="filter-group" role="group" aria-label="Filter predictions">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="aplus">
+        ⭐ Grade A+
+      </button>
+      <button class="filter-btn" data-filter="strongbuy">
+        🔥 Strong Buy
+      </button>
+      <button class="filter-btn" data-filter="buy">
+        <svg width="10" height="10" viewBox="0 0 10 10" style="margin-right:4px"><circle cx="5" cy="5" r="4" fill="#22C55E"/></svg>
+        Bullish
+      </button>
+      <button class="filter-btn" data-filter="sell">
+        <svg width="10" height="10" viewBox="0 0 10 10" style="margin-right:4px"><circle cx="5" cy="5" r="4" fill="#EF4444"/></svg>
+        Bearish
+      </button>
+      <button class="filter-btn" data-filter="hold">
+        <svg width="10" height="10" viewBox="0 0 10 10" style="margin-right:4px"><circle cx="5" cy="5" r="4" fill="#F59E0B"/></svg>
+        Neutral
+      </button>
+    </div>
+    <div class="stock-count">Showing <span id="visibleCount">19</span> of <span>19</span> stocks</div>
+    <div class="refresh-timer" id="refreshTimer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      <span id="countdownText">Next update: 2:00</span>
+    </div>
+  </div>
+
+  <!-- ============ PREDICTION LOG ============ -->
+  <div class="prediction-log-wrapper" id="predLogWrapper">
+    <div class="pred-log-header" id="predLogToggle">
+      <div class="pred-log-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 17 10 11 4 5"></polyline>
+          <line x1="12" y1="19" x2="20" y2="19"></line>
+        </svg>
+        <span>Model Prediction Console</span>
+        <span class="pred-log-badge" id="predLogCount">0</span>
+      </div>
+      <span class="pred-log-toggle-icon" id="predLogArrow">▼</span>
+    </div>
+    <div class="pred-log-body" id="predLogBody">
+      <div class="pred-log-entries" id="predLogEntries">
+        <div class="pred-log-entry system"><span class="log-time">--:--:--</span> <span class="log-text">Initializing BharatQuant prediction engine...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN LAYOUT ============ -->
+  <div class="main-layout">
+    <!-- Stock Grid -->
+    <div class="stocks-panel">
+      <div class="stock-grid" id="stockGrid">
+        <!-- Cards rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-drag-handle"></div>
+      <button class="detail-close" id="detailClose" aria-label="Close detail panel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="detail-header">
+        <div class="detail-symbol" id="detailSymbol">—</div>
+        <div class="detail-name" id="detailName">—</div>
+        <div class="detail-price-section">
+          <span class="detail-price" id="detailPrice">—</span>
+          <span class="detail-change" id="detailChange">—</span>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-timeframe" id="chartTimeframe">
+        <button class="tf-btn" data-range="5d">5D</button>
+        <button class="tf-btn active" data-range="1mo">1M</button>
+        <button class="tf-btn" data-range="3mo">3M</button>
+        <button class="tf-btn" data-range="6mo">6M</button>
+        <button class="tf-btn" data-range="1y">1Y</button>
+      </div>
+      <div class="chart-container" id="chartContainer"></div>
+
+      <!-- Prediction -->
+      <div class="prediction-panel" id="predictionPanel">
+        <div class="pred-header-row">
+          <h3>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px">
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"></path>
+              <path d="M12 16v-4"></path><path d="M12 8h.01"></path>
+            </svg>
+            Quantum AI Confluence
+          </h3>
+          <span class="detail-grade-badge" id="detailGradeBadge">Grade A+</span>
+        </div>
+        <div class="prediction-signal">
+          <span class="prediction-badge" id="predBadge">—</span>
+          <div class="confidence-bar">
+            <div class="bar-label">
+              <span>Confluence Score</span>
+              <strong id="predConfidence">—</strong>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" id="predBar" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade Setup Plan -->
+        <div class="trade-setup-box" id="tradeSetupBox">
+          <div class="setup-title" id="setupActionPlan">High-Conviction Momentum Breakout</div>
+          <div class="setup-grid">
+            <div class="setup-item">
+              <span class="setup-lbl">Entry Zone</span>
+              <strong class="setup-val" id="setupEntry">—</strong>
+            </div>
+            <div class="setup-item">
+              <span class="setup-lbl">Stop Loss (SL)</span>
+              <strong class="setup-val sl" id="setupSL">—</strong>
+            </div>
+            <div class="setup-item">
+              <span class="setup-lbl">Target 1</span>
+              <strong class="setup-val tgt" id="setupT1">—</strong>
+            </div>
+            <div class="setup-item">
+              <span class="setup-lbl">Target 2</span>
+              <strong class="setup-val tgt" id="setupT2">—</strong>
+            </div>
+            <div class="setup-item">
+              <span class="setup-lbl">Risk : Reward</span>
+              <strong class="setup-val rr" id="setupRR">—</strong>
+            </div>
+            <div class="setup-item">
+              <span class="setup-lbl">Market Regime</span>
+              <strong class="setup-val regime" id="setupRegime">BULLISH CALM</strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="predReasoning" style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-top:8px;"></div>
+      </div>
+
+      <!-- Technical Indicators -->
+      <div class="indicators-grid" id="indicatorsGrid">
+        <div class="indicator-card">
+          <div class="ind-label">RSI (14)</div>
+          <div class="ind-value" id="indRSI">—</div>
+        </div>
+        <div class="indicator-card">
+          <div class="ind-label">MACD</div>
+          <div class="ind-value" id="indMACD">—</div>
+        </div>
+        <div class="indicator-card">
+          <div class="ind-label">ADX</div>
+          <div class="ind-value" id="indADX">—</div>
+        </div>
+        <div class="indicator-card">
+          <div class="ind-label">ATR %</div>
+          <div class="ind-value" id="indATR">—</div>
+        </div>
+        <div class="indicator-card">
+          <div class="ind-label">BB Position</div>
+          <div class="ind-value" id="indBB">—</div>
+        </div>
+        <div class="indicator-card">
+          <div class="ind-label">Volatility</div>
+          <div class="ind-value" id="indVol">—</div>
+        </div>
+      </div>
+
+      <!-- Model Info -->
+      <div class="model-info">
+        <h3>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          XGBoost Model
+        </h3>
+        <div class="model-stat-row">
+          <span class="stat-label">Trees</span>
+          <span class="stat-value" id="modelTrees">500</span>
+        </div>
+        <div class="model-stat-row">
+          <span class="stat-label">Features</span>
+          <span class="stat-value" id="modelFeatures">59</span>
+        </div>
+        <div class="model-stat-row">
+          <span class="stat-label">Objective</span>
+          <span class="stat-value" id="modelObjective">binary:logistic</span>
+        </div>
+        <div class="model-stat-row">
+          <span class="stat-label">Base Score</span>
+          <span class="stat-value" id="modelBaseScore">0.5215</span>
+        </div>
+        <div class="feature-bars" id="featureBars">
+          <!-- Top feature importance bars rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Update overlay -->
+  <div class="update-overlay" id="updateOverlay">
+    <div class="update-spinner"></div>
+    <span>Refreshing predictions...</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# BharatQuant Server Requirements
+# The core server uses Python standard library (http.server, urllib, json, socketserver)
+# Optional packages for retraining pipeline:
+numpy>=1.24.0
+xgboost>=2.0.0
