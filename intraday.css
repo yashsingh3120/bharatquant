@@ -1,0 +1,676 @@
+/* ============================================================
+   BharatQuant Intraday Scalper AI Terminal
+   Dedicated High-Frequency & Day-Trading Dark Theme
+   ============================================================ */
+
+:root {
+  --bg-main: #07090E;
+  --bg-card: #0D111A;
+  --bg-card-hover: #131A29;
+  --bg-surface: #101524;
+  --bg-surface-subtle: #161D31;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-active: rgba(6, 182, 212, 0.4);
+  
+  --neon-green: #10B981;
+  --neon-green-glow: rgba(16, 185, 129, 0.25);
+  --neon-red: #F43F5E;
+  --neon-red-glow: rgba(244, 63, 94, 0.25);
+  --neon-cyan: #06B6D4;
+  --neon-amber: #F59E0B;
+  --neon-purple: #8B5CF6;
+  
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Header */
+.intraday-header {
+  background: rgba(13, 17, 26, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 10px 24px;
+}
+
+.header-inner {
+  max-width: 1720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #06B6D4, #3B82F6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
+}
+
+.brand-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scalper-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(245, 158, 11, 0.2));
+  color: #F43F5E;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+/* Mode Switcher Nav */
+.nav-modes {
+  display: flex;
+  align-items: center;
+  background: rgba(7, 9, 14, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.nav-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.nav-mode-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-mode-btn.active {
+  background: linear-gradient(135deg, #06B6D4, #0284C7);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.35);
+}
+
+/* Market Tickers */
+.market-ticker-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.ticker-name { color: var(--text-muted); font-size: 10px; font-weight: 700; }
+.ticker-val { font-weight: 600; }
+.ticker-chg.up { color: var(--neon-green); }
+.ticker-chg.down { color: var(--neon-red); }
+
+/* Live Status */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--neon-green);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green);
+  animation: pulse 1.6s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 12px var(--neon-green); }
+}
+
+/* Intraday Console & Controls */
+.top-controls {
+  max-width: 1720px;
+  margin: 14px auto 0;
+  width: 100%;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scalper-alert-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.alert-stream-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.alert-latest-msg {
+  color: var(--text-primary);
+  flex: 1;
+  margin: 0 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.refresh-countdown {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* Filter Strip */
+.filter-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.search-input-box {
+  position: relative;
+  width: 320px;
+}
+
+.search-input-box input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px 8px 34px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-input-box input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.filter-btn.active {
+  background: var(--bg-surface-subtle);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+/* Layout */
+.intraday-layout {
+  max-width: 1720px;
+  width: 100%;
+  margin: 14px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  gap: 16px;
+  flex: 1;
+}
+
+/* Stock Scanner Grid */
+.scanner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+/* Stock Card */
+.scalp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.scalp-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.scalp-card.selected {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
+}
+
+.scalp-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.symbol-name-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.scalp-symbol {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.scalp-company {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Scalp Signal Badges */
+.scalp-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scalp-badge.buy {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green-glow);
+}
+
+.scalp-badge.sell {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid var(--neon-red);
+  color: var(--neon-red);
+  box-shadow: 0 0 8px var(--neon-red-glow);
+}
+
+.scalp-badge.breakout {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(16, 185, 129, 0.25));
+  border: 1px solid var(--neon-cyan);
+  color: #38BDF8;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+.scalp-badge.wait {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--neon-amber);
+}
+
+/* Price & Intraday Metrics Row */
+.scalp-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.scalp-price {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.scalp-chg {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.scalp-chg.up { color: var(--neon-green); }
+.scalp-chg.down { color: var(--neon-red); }
+
+/* Intraday Quant Matrix Bar (VWAP / EMA / SuperTrend) */
+.intraday-matrix {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: rgba(7, 9, 14, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.matrix-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix-lbl { color: var(--text-muted); font-size: 8px; text-transform: uppercase; font-weight: 700; }
+.matrix-val { font-weight: 700; }
+.matrix-val.bullish { color: var(--neon-green); }
+.matrix-val.bearish { color: var(--neon-red); }
+.matrix-val.neutral { color: var(--neon-amber); }
+
+/* Strict Short-Term Targets Row */
+.scalp-targets-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: rgba(16, 21, 36, 0.6);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.target-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.target-col .lbl {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.target-col.t1 { color: #34D399; }
+.target-col.sl { color: #FB7185; }
+.target-col.rr { color: #38BDF8; font-weight: 700; }
+
+.scalp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+/* Detail Execution Terminal (Right Side) */
+.execution-terminal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: fit-content;
+  position: sticky;
+  top: 75px;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+}
+
+.terminal-stock-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-symbol {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.terminal-price-box {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.terminal-price { font-size: 20px; font-weight: 800; }
+.terminal-chg { font-size: 12px; font-weight: 700; }
+
+/* Timeframe buttons */
+.chart-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tf-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.tf-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.tf-btn.active {
+  background: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  color: #000;
+}
+
+.intraday-chart-container {
+  height: 250px;
+  background: #090D16;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Trade Setup Ticket */
+.trade-ticket {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-signal-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+}
+
+.ticket-strategy-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+
+.ticket-cell {
+  background: rgba(7, 9, 14, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-cell .lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+.ticket-cell .val { font-size: 12px; font-weight: 700; margin-top: 2px; }
+.ticket-cell .val.sl { color: var(--neon-red); }
+.ticket-cell .val.tgt { color: var(--neon-green); }
+.ticket-cell .val.rr { color: var(--neon-cyan); }
+
+/* Intraday Technical Checklist */
+.scalp-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.check-status {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.check-status.bullish { color: var(--neon-green); }
+.check-status.bearish { color: var(--neon-red); }
+.check-status.neutral { color: var(--neon-amber); }
+
+@media (max-width: 1080px) {
+  .intraday-layout { grid-template-columns: 1fr; }
+  .execution-terminal { position: static; }
+}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BharatQuant — ⚡ Intraday Scalper AI Terminal</title>
+  <meta name="description" content="Dedicated real-time intraday AI trading terminal with 5-minute candles, VWAP, SuperTrend, EMA ribbons, and automated short-term scalp targets.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="intraday.css">
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="intraday-header">
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-title">
+          BharatQuant
+          <span class="scalper-tag">⚡ Intraday Scalper</span>
+        </div>
+      </div>
+
+      <!-- Mode Switcher Navigation -->
+      <nav class="nav-modes" aria-label="Trading Mode">
+        <a href="index.html" class="nav-mode-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          📊 Swing & Positional AI
+        </a>
+        <a href="intraday.html" class="nav-mode-btn active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          ⚡ Intraday Scalper AI
+        </a>
+      </nav>
+
+      <!-- Market Indices Strip -->
+      <div class="market-ticker-strip">
+        <div class="ticker-item">
+          <span class="ticker-name">NIFTY</span>
+          <span class="ticker-val" id="niftyPrice">—</span>
+          <span class="ticker-chg" id="niftyChange">—</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">BANK NIFTY</span>
+          <span class="ticker-val" id="bankniftyPrice">—</span>
+          <span class="ticker-chg" id="bankniftyChange">—</span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">INDIA VIX</span>
+          <span class="ticker-val" id="vixPrice">—</span>
+          <span class="ticker-chg" id="vixChange">—</span>
+        </div>
+      </div>
+
+      <div class="status-badge">
+        <span class="pulse-dot"></span>
+        <span id="marketClock">--:--:--</span>
+        <span>• LIVE 5M</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ TOP CONTROLS & ALERT TICKER ============ -->
+  <div class="top-controls">
+    <div class="scalper-alert-bar">
+      <div class="alert-stream-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        LIVE SCALPER SIGNALS
+      </div>
+      <div class="alert-latest-msg" id="alertStreamMsg">
+        Scanning 5-minute candles across 19 liquid NSE stocks for VWAP breakouts & EMA crossovers...
+      </div>
+      <div class="refresh-countdown">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Next Tick: <strong id="countdownSec" style="color:var(--neon-cyan);margin-left:2px;">15s</strong>
+      </div>
+    </div>
+
+    <!-- Filter & Search Strip -->
+    <div class="filter-strip">
+      <div class="search-input-box">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="scalpSearch" placeholder="Search intraday symbol... (e.g. TCS, RELIANCE)">
+      </div>
+
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All Stocks (19)</button>
+        <button class="filter-btn" data-filter="buy">⚡ Scalp Buy</button>
+        <button class="filter-btn" data-filter="sell">🔻 Scalp Short</button>
+        <button class="filter-btn" data-filter="orb">🚀 ORB Breakout</button>
+        <button class="filter-btn" data-filter="vwap">🟢 Above VWAP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN INTRADAY LAYOUT ============ -->
+  <main class="intraday-layout">
+    
+    <!-- Left Column: Intraday Stock Scanner -->
+    <section class="scanner-grid" id="scalpGrid">
+      <!-- Stock scalp cards dynamically injected by intraday.js -->
+    </section>
+
+    <!-- Right Column: Live Intraday Execution Terminal -->
+    <aside class="execution-terminal" id="execTerminal">
+      <div class="terminal-header">
+        <div class="terminal-stock-info">
+          <div class="terminal-symbol" id="termSymbol">TCS</div>
+          <div style="font-size:11px;color:var(--text-muted);" id="termName">Tata Consultancy Services</div>
+        </div>
+        <div class="terminal-price-box">
+          <div class="terminal-price" id="termPrice">₹2,105.00</div>
+          <div class="terminal-chg" id="termChange">—</div>
+        </div>
+      </div>
+
+      <!-- Chart Control & Timeframe Selector -->
+      <div class="chart-header-row">
+        <span class="chart-title">Intraday Candlesticks & VWAP</span>
+        <div class="tf-selector">
+          <button class="tf-btn" data-tf="1m">1M</button>
+          <button class="tf-btn active" data-tf="5m">5M</button>
+          <button class="tf-btn" data-tf="15m">15M</button>
+        </div>
+      </div>
+
+      <!-- Lightweight Chart -->
+      <div class="intraday-chart-container" id="intradayChart"></div>
+
+      <!-- Fast Scalp Trade Ticket -->
+      <div class="trade-ticket" id="tradeTicket">
+        <div class="ticket-top">
+          <span class="ticket-strategy-name" id="ticketStrategy">⚡ 9/21 EMA Trend Scalp</span>
+          <span class="ticket-signal-badge" id="ticketBadge">SCALP BUY</span>
+        </div>
+
+        <div class="ticket-grid">
+          <div class="ticket-cell">
+            <span class="lbl">Entry Zone</span>
+            <span class="val" id="ticketEntry">—</span>
+          </div>
+          <div class="ticket-cell">
+            <span class="lbl">Stop Loss (SL)</span>
+            <span class="val sl" id="ticketSL">—</span>
+          </div>
+          <div class="ticket-cell">
+            <span class="lbl">Target 1 (Scalp)</span>
+            <span class="val tgt" id="ticketT1">—</span>
+          </div>
+          <div class="ticket-cell">
+            <span class="lbl">Target 2 (Runner)</span>
+            <span class="val tgt" id="ticketT2">—</span>
+          </div>
+          <div class="ticket-cell">
+            <span class="lbl">Risk : Reward</span>
+            <span class="val rr" id="ticketRR">1:2.4</span>
+          </div>
+          <div class="ticket-cell">
+            <span class="lbl">Trailing SL</span>
+            <span class="val" id="ticketTrailingSL" style="color:#38BDF8;">—</span>
+          </div>
+        </div>
+
+        <!-- Technical Checklist -->
+        <div class="scalp-checklist">
+          <div class="check-item">
+            <span>VWAP Bias (Current vs Session Average):</span>
+            <strong class="check-status" id="chkVWAP">ABOVE VWAP (+0.4%)</strong>
+          </div>
+          <div class="check-item">
+            <span>EMA 9 / 21 Ribbon:</span>
+            <strong class="check-status" id="chkEMA">BULLISH CROSSOVER</strong>
+          </div>
+          <div class="check-item">
+            <span>Intraday SuperTrend (10, 3):</span>
+            <strong class="check-status" id="chkSuperTrend">GREEN (BULLISH)</strong>
+          </div>
+          <div class="check-item">
+            <span>Opening Range Breakout (ORB 15M):</span>
+            <strong class="check-status" id="chkORB">TESTING DAY HIGH</strong>
+          </div>
+          <div class="check-item">
+            <span>Intraday Relative Volume (RVOL):</span>
+            <strong class="check-status" id="chkRVOL">1.4x (HIGH SURGE)</strong>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <script src="intraday.js"></script>
+</body>
+</html>
