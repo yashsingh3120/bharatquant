@@ -1607,9 +1607,16 @@
       alert('Live price not ready for ' + sym + '. Please wait a moment.');
       return;
     }
-    const sl = pred?.sl || (side === 'BUY' ? +(price * 0.98).toFixed(2) : +(price * 1.02).toFixed(2));
-    const t1 = pred?.t1 || (side === 'BUY' ? +(price * 1.04).toFixed(2) : +(price * 0.96).toFixed(2));
-    const t2 = pred?.t2 || (side === 'BUY' ? +(price * 1.08).toFixed(2) : +(price * 0.92).toFixed(2));
+    let sl, t1, t2;
+    if (side === 'BUY') {
+      sl = (pred?.sl && pred.sl < price) ? pred.sl : +(price * 0.985).toFixed(2);
+      t1 = (pred?.t1 && pred.t1 > price) ? pred.t1 : +(price * 1.035).toFixed(2);
+      t2 = (pred?.t2 && pred.t2 > t1) ? pred.t2 : +(price * 1.065).toFixed(2);
+    } else {
+      sl = (pred?.sl && pred.sl > price) ? pred.sl : +(price * 1.015).toFixed(2);
+      t1 = (pred?.t1 && pred.t1 < price) ? pred.t1 : +(price * 0.965).toFixed(2);
+      t2 = (pred?.t2 && pred.t2 < t1) ? pred.t2 : +(price * 0.935).toFixed(2);
+    }
 
     const qtyInput = document.getElementById('swingOrderQty');
     const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;

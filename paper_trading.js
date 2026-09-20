@@ -115,9 +115,19 @@ window.PaperTrading = (() => {
 
     const tradeId = 'pt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
-    const numSl = parseFloat(sl) || (side === 'BUY' ? +(currentPrice * 0.995).toFixed(2) : +(currentPrice * 1.005).toFixed(2));
-    const numT1 = parseFloat(t1) || (side === 'BUY' ? +(currentPrice * 1.01).toFixed(2) : +(currentPrice * 0.99).toFixed(2));
-    const numT2 = parseFloat(t2) || (side === 'BUY' ? +(currentPrice * 1.02).toFixed(2) : +(currentPrice * 0.98).toFixed(2));
+    let numSl = parseFloat(sl);
+    let numT1 = parseFloat(t1);
+    let numT2 = parseFloat(t2);
+
+    if (side === 'BUY') {
+      if (!numSl || numSl >= currentPrice) numSl = +(currentPrice * 0.985).toFixed(2);
+      if (!numT1 || numT1 <= currentPrice) numT1 = +(currentPrice * 1.035).toFixed(2);
+      if (!numT2 || numT2 <= numT1) numT2 = +(currentPrice * 1.065).toFixed(2);
+    } else {
+      if (!numSl || numSl <= currentPrice) numSl = +(currentPrice * 1.015).toFixed(2);
+      if (!numT1 || numT1 >= currentPrice) numT1 = +(currentPrice * 0.965).toFixed(2);
+      if (!numT2 || numT2 >= numT1) numT2 = +(currentPrice * 0.935).toFixed(2);
+    }
 
     const position = {
       id: tradeId,
@@ -158,12 +168,12 @@ window.PaperTrading = (() => {
     }
 
     const pnlPct = ((pnl) / (p.entryPrice * p.qty)) * 100;
-    const isWin = pnl > 0;
+    const isWin = pnl > 0.01;
 
     wallet.realizedPnL += pnl;
     wallet.balance += pnl;
     if (isWin) wallet.wins++;
-    else wallet.losses++;
+    else if (pnl < -0.01) wallet.losses++;
 
     const closedRecord = {
       id: p.id,
@@ -186,8 +196,18 @@ window.PaperTrading = (() => {
     saveToStorage();
     renderUI();
 
-    const signStr = isWin ? '🎯 [PROFIT]' : '🛡️ [LOSS]';
-    const toastType = isWin ? 'success' : 'error';
+    let signStr = '';
+    let toastType = 'info';
+    if (pnl > 0.01) {
+      signStr = '🎯 [PROFIT]';
+      toastType = 'success';
+    } else if (pnl < -0.01) {
+      signStr = '🛡️ [LOSS]';
+      toastType = 'error';
+    } else {
+      signStr = '⚖️ [BREAK-EVEN]';
+      toastType = 'info';
+    }
     showNotification(`${signStr} ${p.symbol} closed @ ${formatINR(finalPrice)} (${reason}) -> P&L: ${formatINR(pnl)} (${formatPct(pnlPct)})`, toastType);
   }
 
@@ -227,18 +247,20 @@ window.PaperTrading = (() => {
         p.unrealizedPnLPct = +((pnl / (p.entryPrice * p.qty)) * 100).toFixed(2);
         updated = true;
 
-        // Automated Triggers Check
-        if (p.side === 'BUY') {
-          if (p.currentPrice >= p.t1 && p.t1 > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-          } else if (p.currentPrice <= p.sl && p.sl > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
-          }
-        } else {
-          if (p.currentPrice <= p.t1 && p.t1 > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-          } else if (p.currentPrice >= p.sl && p.sl > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+        // Automated Triggers Check (Strict Validation: only fire if price moved and crossed valid thresholds)
+        if (p.currentPrice !== p.entryPrice) {
+          if (p.side === 'BUY') {
+            if (p.t1 > p.entryPrice && p.currentPrice >= p.t1) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+            } else if (p.sl < p.entryPrice && p.currentPrice <= p.sl) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+            }
+          } else {
+            if (p.t1 < p.entryPrice && p.currentPrice <= p.t1) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+            } else if (p.sl > p.entryPrice && p.currentPrice >= p.sl) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+            }
           }
         }
 
@@ -306,18 +328,20 @@ window.PaperTrading = (() => {
         p.unrealizedPnLPct = (pnl / (p.entryPrice * p.qty)) * 100;
         updatedAny = true;
 
-        // Automated Triggers Check
-        if (p.side === 'BUY') {
-          if (p.currentPrice >= p.t1 && p.t1 > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-          } else if (p.currentPrice <= p.sl && p.sl > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
-          }
-        } else {
-          if (p.currentPrice <= p.t1 && p.t1 > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-          } else if (p.currentPrice >= p.sl && p.sl > 0) {
-            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+        // Automated Triggers Check (Strict Validation)
+        if (p.currentPrice !== p.entryPrice) {
+          if (p.side === 'BUY') {
+            if (p.t1 > p.entryPrice && p.currentPrice >= p.t1) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+            } else if (p.sl < p.entryPrice && p.currentPrice <= p.sl) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+            }
+          } else {
+            if (p.t1 < p.entryPrice && p.currentPrice <= p.t1) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+            } else if (p.sl > p.entryPrice && p.currentPrice >= p.sl) {
+              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+            }
           }
         }
       }

@@ -756,9 +756,16 @@
     const sym = state.selectedSymbol || 'TCS';
     const data = state.intradayData[sym];
     const price = data && data.price ? data.price : 2105.00;
-    const sl = data && data.sl ? data.sl : (side === 'BUY' ? +(price * 0.995).toFixed(2) : +(price * 1.005).toFixed(2));
-    const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
-    const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
+    let sl, t1, t2;
+    if (side === 'BUY') {
+      sl = (data?.sl && data.sl < price) ? data.sl : +(price * 0.992).toFixed(2);
+      t1 = (data?.t1 && data.t1 > price) ? data.t1 : +(price * 1.015).toFixed(2);
+      t2 = (data?.t2 && data.t2 > t1) ? data.t2 : +(price * 1.025).toFixed(2);
+    } else {
+      sl = (data?.sl && data.sl > price) ? data.sl : +(price * 1.008).toFixed(2);
+      t1 = (data?.t1 && data.t1 < price) ? data.t1 : +(price * 0.985).toFixed(2);
+      t2 = (data?.t2 && data.t2 < t1) ? data.t2 : +(price * 0.975).toFixed(2);
+    }
 
     const qtyInput = document.getElementById('intradayOrderQty');
     const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;
@@ -778,9 +785,16 @@
     if (!window.PaperTrading) return;
     const data = state.intradayData[sym];
     const price = data && data.price ? data.price : 1000;
-    const sl = data && data.sl ? data.sl : (side === 'BUY' ? +(price * 0.995).toFixed(2) : +(price * 1.005).toFixed(2));
-    const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
-    const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
+    let sl, t1, t2;
+    if (side === 'BUY') {
+      sl = (data?.sl && data.sl < price) ? data.sl : +(price * 0.992).toFixed(2);
+      t1 = (data?.t1 && data.t1 > price) ? data.t1 : +(price * 1.015).toFixed(2);
+      t2 = (data?.t2 && data.t2 > t1) ? data.t2 : +(price * 1.025).toFixed(2);
+    } else {
+      sl = (data?.sl && data.sl > price) ? data.sl : +(price * 1.008).toFixed(2);
+      t1 = (data?.t1 && data.t1 < price) ? data.t1 : +(price * 0.985).toFixed(2);
+      t2 = (data?.t2 && data.t2 < t1) ? data.t2 : +(price * 0.975).toFixed(2);
+    }
 
     const qtyInput = document.getElementById('intradayOrderQty');
     const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;
