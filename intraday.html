@@ -59,32 +59,32 @@
         </div>
       </div>
 
-      <!-- Virtual Paper Wallet Header -->
-      <div class="paper-wallet-bar" id="paperWalletBar">
-        <div class="wallet-item">
-          <span class="w-lbl">Virtual Cash</span>
-          <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
+      <!-- Right Header Actions (Clock & Paper Wallet) -->
+      <div class="header-right-actions">
+        <!-- Live Market Clock (Always Visible) -->
+        <div class="status-badge" id="headerClockBadge">
+          <span class="pulse-dot"></span>
+          <span id="marketClock">--:--:--</span>
+          <span class="live-pill">LIVE 5M</span>
         </div>
-        <div class="wallet-item">
-          <span class="w-lbl">Live P&L</span>
-          <strong class="w-val pnl-val" id="paperTotalPnL">+₹0.00</strong>
-        </div>
-        <div class="wallet-item">
-          <span class="w-lbl">Win Rate</span>
-          <strong class="w-val" id="paperWinRate">—</strong>
-        </div>
-        <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
-          📋 Trade Book (<span id="paperOpenCount">0</span>)
-        </button>
-        <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
-          🔄
-        </button>
-      </div>
 
-      <div class="status-badge">
-        <span class="pulse-dot"></span>
-        <span id="marketClock">--:--:--</span>
-        <span>• LIVE 5M</span>
+        <!-- Virtual Paper Wallet Header -->
+        <div class="paper-wallet-bar" id="paperWalletBar">
+          <div class="wallet-item">
+            <span class="w-lbl">Virtual Cash</span>
+            <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
+          </div>
+          <div class="wallet-item">
+            <span class="w-lbl">Live P&L</span>
+            <strong class="w-val pnl-val" id="paperTotalPnL">+₹0.00</strong>
+          </div>
+          <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
+            📋 Trade Book (<span id="paperOpenCount">0</span>)
+          </button>
+          <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
+            🔄
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -237,6 +237,7 @@
         <div style="display:flex;align-items:center;gap:10px;">
           <h2>📋 Virtual Trade Book & Portfolio</h2>
           <span class="scalper-tag" style="background:rgba(16,185,129,0.15);color:#10B981;border-color:#10B981;">Paper Simulator</span>
+          <span class="scalper-tag" style="background:rgba(6,182,212,0.15);color:#06B6D4;border-color:#06B6D4;">Win Rate: <strong id="paperWinRate" style="margin-left:3px;">—</strong></span>
         </div>
         <button class="btn-modal-close" onclick="PaperTrading.toggleTradeBook()">✕</button>
       </div>
@@ -252,6 +253,7 @@
           <table class="paper-table">
             <thead>
               <tr>
+                <th>Time</th>
                 <th>Stock</th>
                 <th>Side</th>
                 <th>Qty</th>
@@ -276,6 +278,7 @@
           <table class="paper-table">
             <thead>
               <tr>
+                <th>Entry Time</th>
                 <th>Stock</th>
                 <th>Side</th>
                 <th>Qty</th>
@@ -283,7 +286,7 @@
                 <th>Exit Price</th>
                 <th>Realized P&L</th>
                 <th>Exit Trigger</th>
-                <th>Time</th>
+                <th>Exit Time</th>
               </tr>
             </thead>
             <tbody id="paperHistoryBody">

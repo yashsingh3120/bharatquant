@@ -245,6 +245,42 @@ body {
   background: var(--neon-red-bg);
 }
 
+/* Right Header Actions Group */
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Status Clock Badge — Firmly visible and prominent */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: var(--neon-green);
+  padding: 6px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.2);
+}
+
+.status-badge .live-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.3);
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
 /* Virtual Paper Wallet Header Widget */
 .paper-wallet-bar {
   display: flex;
@@ -324,23 +360,6 @@ body {
   opacity: 1;
   color: var(--neon-cyan);
   transform: rotate(90deg);
-}
-
-/* Status Clock Badge */
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--neon-green);
-  padding: 5px 10px;
-  border-radius: 20px;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .pulse-dot {

@@ -274,12 +274,13 @@ const PaperTrading = (() => {
 
     if (openTable) {
       if (positions.length === 0) {
-        openTable.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">No open positions. Click "Paper Buy" or "Paper Short" to execute virtual trades!</td></tr>`;
+        openTable.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text-muted);">No open positions. Click "Paper Buy" or "Paper Short" to execute virtual trades!</td></tr>`;
       } else {
         openTable.innerHTML = positions.map(p => {
           const isUp = p.unrealizedPnL >= 0;
           return `
             <tr>
+              <td><span style="color:var(--text-muted);font-size:11px;font-family:var(--font-mono);">${p.time}</span></td>
               <td><strong>${p.symbol}</strong></td>
               <td><span class="badge ${p.side === 'BUY' ? 'buy' : 'sell'}">${p.side}</span></td>
               <td>${p.qty}</td>
@@ -297,12 +298,13 @@ const PaperTrading = (() => {
 
     if (historyTable) {
       if (history.length === 0) {
-        historyTable.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">No closed trades yet.</td></tr>`;
+        historyTable.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-muted);">No closed trades yet.</td></tr>`;
       } else {
         historyTable.innerHTML = history.map(h => {
           const isUp = h.pnl >= 0;
           return `
             <tr>
+              <td><span style="color:var(--text-muted);font-size:11px;font-family:var(--font-mono);">${h.entryTime || '—'}</span></td>
               <td><strong>${h.symbol}</strong></td>
               <td><span class="badge ${h.side === 'BUY' ? 'buy' : 'sell'}">${h.side}</span></td>
               <td>${h.qty}</td>
@@ -310,7 +312,7 @@ const PaperTrading = (() => {
               <td>${formatINR(h.exitPrice)}</td>
               <td class="${isUp ? 'text-profit' : 'text-loss'}"><strong>${formatINR(h.pnl)} (${formatPct(h.pnlPct)})</strong></td>
               <td><span class="reason-tag">${h.reason}</span></td>
-              <td><span style="font-size:11px;color:var(--text-muted);">${h.exitTime}</span></td>
+              <td><span style="font-size:11px;color:var(--neon-cyan);font-family:var(--font-mono);">${h.exitTime}</span></td>
             </tr>
           `;
         }).join('');
