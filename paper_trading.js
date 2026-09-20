@@ -343,9 +343,68 @@ window.PaperTrading = (() => {
     }
   }
 
+  // ── Header Index Ticker Sliding Animation ─────────────────
+  function initTickerSlider() {
+    const container = document.getElementById('tickerSliderContainer');
+    if (!container) return;
+    const slides = container.querySelectorAll('.ticker-slide');
+    const dots = container.querySelectorAll('.slide-dot');
+    if (slides.length <= 1) return;
+
+    let currentIdx = 0;
+    let timer = null;
+    let isHovered = false;
+
+    function goToSlide(nextIdx) {
+      if (nextIdx === currentIdx) return;
+      const currentSlide = slides[currentIdx];
+      const nextSlide = slides[nextIdx];
+
+      // Current slide exits to top
+      currentSlide.classList.remove('active', 'next');
+      currentSlide.classList.add('prev');
+
+      // Next slide enters from bottom
+      nextSlide.classList.remove('prev', 'next');
+      nextSlide.classList.add('active');
+
+      // Update dots
+      dots.forEach((d, i) => d.classList.toggle('active', i === nextIdx));
+
+      // After transition finishes, reset the exited slide to 'next'
+      setTimeout(() => {
+        if (currentSlide !== slides[currentIdx]) {
+          currentSlide.classList.remove('prev');
+          currentSlide.classList.add('next');
+        }
+      }, 500);
+
+      currentIdx = nextIdx;
+    }
+
+    function next() {
+      const nextIdx = (currentIdx + 1) % slides.length;
+      goToSlide(nextIdx);
+    }
+
+    function start() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        if (!isHovered) next();
+      }, 3200);
+    }
+
+    container.addEventListener('mouseenter', () => { isHovered = true; });
+    container.addEventListener('mouseleave', () => { isHovered = false; });
+    container.addEventListener('click', () => { next(); start(); });
+
+    start();
+  }
+
   // ── Initialize on DOM Load ───────────────────────────────
   function init() {
     renderUI();
+    initTickerSlider();
   }
 
   if (document.readyState === 'loading') {

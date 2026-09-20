@@ -16,47 +16,57 @@
   <!-- ============ HEADER ============ -->
   <header class="header">
     <div class="header-top">
-      <div class="header-brand">
-        <div class="logo">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-            <polyline points="16 7 22 7 22 13"></polyline>
-          </svg>
+      <div class="header-left">
+        <div class="header-brand">
+          <div class="logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+              <polyline points="16 7 22 7 22 13"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h1>BharatQuant</h1>
+            <span class="tagline">AI-Powered Predictions</span>
+          </div>
         </div>
-        <div>
-          <h1>BharatQuant</h1>
-          <span class="tagline">AI-Powered Predictions</span>
-        </div>
+
+        <!-- Mode Switcher Navigation -->
+        <nav class="nav-modes" aria-label="Trading Mode">
+          <a href="index.html" class="nav-mode-btn active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            📊 Swing AI
+          </a>
+          <a href="intraday.html" class="nav-mode-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            ⚡ Intraday AI
+          </a>
+        </nav>
       </div>
 
-      <!-- Mode Switcher Navigation -->
-      <nav class="nav-modes" aria-label="Trading Mode">
-        <a href="index.html" class="nav-mode-btn active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          📊 Swing AI
-        </a>
-        <a href="intraday.html" class="nav-mode-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          ⚡ Intraday AI
-        </a>
-      </nav>
-
       <div class="header-center">
-        <div class="market-ticker" id="marketTicker">
-          <div class="ticker-item">
-            <span class="ticker-label">NIFTY 50</span>
-            <span class="ticker-value" id="niftyPrice">—</span>
-            <span class="ticker-change" id="niftyChange">—</span>
+        <div class="ticker-slider-container" id="tickerSliderContainer" title="Click to cycle index • Auto-sliding every 3s">
+          <div class="ticker-slide active" data-index="0">
+            <span class="slide-badge">NSE</span>
+            <span class="slide-label">NIFTY 50</span>
+            <strong class="slide-value" id="niftyPrice">23,346.40</strong>
+            <span class="slide-change ticker-change up" id="niftyChange">+0.33%</span>
           </div>
-          <div class="ticker-item">
-            <span class="ticker-label">BANK NIFTY</span>
-            <span class="ticker-value" id="bankniftyPrice">—</span>
-            <span class="ticker-change" id="bankniftyChange">—</span>
+          <div class="ticker-slide next" data-index="1">
+            <span class="slide-badge">BANK</span>
+            <span class="slide-label">BANK NIFTY</span>
+            <strong class="slide-value" id="bankniftyPrice">56,358.70</strong>
+            <span class="slide-change ticker-change up" id="bankniftyChange">+0.54%</span>
           </div>
-          <div class="ticker-item">
-            <span class="ticker-label">INDIA VIX</span>
-            <span class="ticker-value" id="vixPrice">—</span>
-            <span class="ticker-change" id="vixChange">—</span>
+          <div class="ticker-slide next" data-index="2">
+            <span class="slide-badge">VOL</span>
+            <span class="slide-label">INDIA VIX</span>
+            <strong class="slide-value" id="vixPrice">11.39</strong>
+            <span class="slide-change ticker-change down" id="vixChange">-0.50%</span>
+          </div>
+          <div class="slide-dots">
+            <span class="slide-dot active"></span>
+            <span class="slide-dot"></span>
+            <span class="slide-dot"></span>
           </div>
         </div>
       </div>
