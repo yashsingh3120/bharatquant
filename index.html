@@ -252,8 +252,31 @@
             </div>
           </div>
 
+          <!-- Order Quantity Selector (User Custom Qty) -->
+          <div class="order-qty-panel">
+            <div class="qty-header">
+              <span class="qty-title">Trade Quantity (Shares)</span>
+              <span class="qty-margin-calc" id="swingQtyMargin">Req Margin: —</span>
+            </div>
+            <div class="qty-input-controls">
+              <button type="button" class="qty-btn" onclick="adjustSwingQty(-5)">-5</button>
+              <button type="button" class="qty-btn" onclick="adjustSwingQty(-1)">-1</button>
+              <input type="number" id="swingOrderQty" class="order-qty-field" value="10" min="1" max="50000" oninput="updateSwingMarginCalc()">
+              <button type="button" class="qty-btn" onclick="adjustSwingQty(1)">+1</button>
+              <button type="button" class="qty-btn" onclick="adjustSwingQty(5)">+5</button>
+              <div class="qty-quick-chips">
+                <button type="button" class="q-chip" onclick="setSwingQty(1)">1</button>
+                <button type="button" class="q-chip" onclick="setSwingQty(10)">10</button>
+                <button type="button" class="q-chip" onclick="setSwingQty(25)">25</button>
+                <button type="button" class="q-chip" onclick="setSwingQty(50)">50</button>
+                <button type="button" class="q-chip" onclick="setSwingQty(100)">100</button>
+                <button type="button" class="q-chip chip-max" onclick="setSwingQtyMax()">MAX</button>
+              </div>
+            </div>
+          </div>
+
           <!-- 1-Click Paper Trading Execution -->
-          <div class="paper-action-btns" style="margin-top: 14px;">
+          <div class="paper-action-btns" style="margin-top: 10px;">
             <button class="paper-btn buy" onclick="executeCurrentPositionalTrade('BUY')">
               <span class="btn-main-label">⚡ PAPER BUY (SWING)</span>
               <span class="btn-sub-label" id="btnBuyTargetSub">Target 1 & SL Managed</span>

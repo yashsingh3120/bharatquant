@@ -441,6 +441,8 @@
     if (buySub) buySub.textContent = `T1: ₹${data.t1} | SL: ₹${data.sl}`;
     if (shortSub) shortSub.textContent = `T1: ₹${data.t1} | SL: ₹${data.sl}`;
 
+    if (window.updateIntradayMarginCalc) window.updateIntradayMarginCalc();
+
     // Technical Checklist
     const vwapPct = (((data.price - data.vwap) / data.vwap) * 100).toFixed(2);
     const vwapEl = document.getElementById('chkVWAP');
@@ -707,6 +709,45 @@
   }
 
   // ── Global Handlers for HTML OnClick ──────────────────────
+  window.adjustIntradayQty = function(delta) {
+    const input = document.getElementById('intradayOrderQty');
+    if (!input) return;
+    let val = Math.max(1, (parseInt(input.value) || 1) + delta);
+    input.value = val;
+    window.updateIntradayMarginCalc();
+  };
+
+  window.setIntradayQty = function(qty) {
+    const input = document.getElementById('intradayOrderQty');
+    if (!input) return;
+    input.value = Math.max(1, parseInt(qty));
+    window.updateIntradayMarginCalc();
+  };
+
+  window.setIntradayQtyMax = function() {
+    const input = document.getElementById('intradayOrderQty');
+    if (!input || !window.PaperTrading) return;
+    const sym = state.selectedSymbol || 'TCS';
+    const data = state.intradayData[sym];
+    const price = data && data.price ? data.price : 2105.00;
+    const cash = window.PaperTrading.getAvailableCash ? window.PaperTrading.getAvailableCash() : 100000;
+    const maxQty = Math.max(1, Math.floor(cash / price));
+    input.value = maxQty;
+    window.updateIntradayMarginCalc();
+  };
+
+  window.updateIntradayMarginCalc = function() {
+    const input = document.getElementById('intradayOrderQty');
+    const calcEl = document.getElementById('intradayQtyMargin');
+    if (!input || !calcEl) return;
+    const qty = Math.max(1, parseInt(input.value) || 1);
+    const sym = state.selectedSymbol || 'TCS';
+    const data = state.intradayData[sym];
+    const price = data && data.price ? data.price : 2105.00;
+    const req = qty * price;
+    calcEl.textContent = `Req: ₹${req.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   window.executeCurrentPaperTrade = function(side) {
     if (!window.PaperTrading) {
       alert('Paper Trading Engine is initializing, please wait 1 second.');
@@ -719,13 +760,17 @@
     const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
     const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
 
+    const qtyInput = document.getElementById('intradayOrderQty');
+    const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;
+
     window.PaperTrading.openPosition(
       sym,
       side,
       price,
       sl,
       t1,
-      t2
+      t2,
+      customQty
     );
   };
 
@@ -737,13 +782,17 @@
     const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
     const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
 
+    const qtyInput = document.getElementById('intradayOrderQty');
+    const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;
+
     window.PaperTrading.openPosition(
       sym,
       side,
       price,
       sl,
       t1,
-      t2
+      t2,
+      customQty
     );
   };
 

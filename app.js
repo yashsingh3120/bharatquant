@@ -1032,6 +1032,8 @@
       changeEl.className = `detail-change ${isUp ? 'up' : 'down'}`;
     }
 
+    if (window.updateSwingMarginCalc) window.updateSwingMarginCalc();
+
     // Init and update chart
     initChart();
     updateChart(symbol, '1mo');
@@ -1552,6 +1554,45 @@
   }
 
   // ── Global Positional Paper Trading Handlers ──────────────
+  window.adjustSwingQty = function(delta) {
+    const input = document.getElementById('swingOrderQty');
+    if (!input) return;
+    let val = Math.max(1, (parseInt(input.value) || 1) + delta);
+    input.value = val;
+    window.updateSwingMarginCalc();
+  };
+
+  window.setSwingQty = function(qty) {
+    const input = document.getElementById('swingOrderQty');
+    if (!input) return;
+    input.value = Math.max(1, parseInt(qty));
+    window.updateSwingMarginCalc();
+  };
+
+  window.setSwingQtyMax = function() {
+    const input = document.getElementById('swingOrderQty');
+    if (!input || !window.PaperTrading) return;
+    const sym = state.selectedStock;
+    const sd = state.stockData[sym];
+    const price = sd?.price || 1000;
+    const cash = window.PaperTrading.getAvailableCash ? window.PaperTrading.getAvailableCash() : 100000;
+    const maxQty = Math.max(1, Math.floor(cash / price));
+    input.value = maxQty;
+    window.updateSwingMarginCalc();
+  };
+
+  window.updateSwingMarginCalc = function() {
+    const input = document.getElementById('swingOrderQty');
+    const calcEl = document.getElementById('swingQtyMargin');
+    if (!input || !calcEl) return;
+    const qty = Math.max(1, parseInt(input.value) || 1);
+    const sym = state.selectedStock;
+    const sd = state.stockData[sym];
+    const price = sd?.price || 0;
+    const req = qty * price;
+    calcEl.textContent = `Req: ₹${req.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   window.executeCurrentPositionalTrade = function(side) {
     if (!window.PaperTrading) return;
     const sym = state.selectedStock;
@@ -1570,6 +1611,9 @@
     const t1 = pred?.t1 || (side === 'BUY' ? +(price * 1.04).toFixed(2) : +(price * 0.96).toFixed(2));
     const t2 = pred?.t2 || (side === 'BUY' ? +(price * 1.08).toFixed(2) : +(price * 0.92).toFixed(2));
 
+    const qtyInput = document.getElementById('swingOrderQty');
+    const customQty = qtyInput ? Math.max(1, parseInt(qtyInput.value) || 1) : 10;
+
     window.PaperTrading.openPosition(
       sym,
       side,
@@ -1577,7 +1621,7 @@
       sl,
       t1,
       t2,
-      25000 // default virtual position size
+      customQty
     );
   };
 

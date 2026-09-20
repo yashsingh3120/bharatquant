@@ -82,7 +82,13 @@ window.PaperTrading = (() => {
   }
 
   // ── 1-Click Order Execution ──────────────────────────────
-  function openPosition(symbol, side, currentPrice, sl, t1, t2, allocAmount = 25000) {
+  function getAvailableCash() {
+    const activeMarginUsed = positions.reduce((sum, p) => sum + (p.entryPrice * p.qty), 0);
+    return Math.max(0, wallet.balance - activeMarginUsed);
+  }
+
+  // ── 1-Click Order Execution with User-Custom Quantity ────
+  function openPosition(symbol, side, currentPrice, sl, t1, t2, userCustomQty = null) {
     currentPrice = parseFloat(currentPrice);
     if (!currentPrice || isNaN(currentPrice) || currentPrice <= 0) {
       showNotification('❌ Waiting for live stock price before order execution...', 'error');
@@ -90,16 +96,23 @@ window.PaperTrading = (() => {
     }
 
     // Check available cash
-    const activeMarginUsed = positions.reduce((sum, p) => sum + (p.entryPrice * p.qty), 0);
-    const availableCash = Math.max(0, wallet.balance - activeMarginUsed);
+    const availableCash = getAvailableCash();
 
-    if (availableCash < currentPrice) {
-      showNotification(`⚠️ Insufficient cash (${formatINR(availableCash)}). Click 🔄 to reset wallet to ₹1,00,000!`, 'error');
+    let qty = 1;
+    if (userCustomQty && parseInt(userCustomQty) > 0) {
+      qty = parseInt(userCustomQty);
+    } else {
+      qty = Math.max(1, Math.min(10, Math.floor(availableCash / currentPrice)));
+    }
+
+    const requiredCapital = qty * currentPrice;
+
+    if (availableCash < requiredCapital) {
+      const maxPossible = Math.floor(availableCash / currentPrice);
+      showNotification(`⚠️ Insufficient cash! Required for ${qty} shares: ${formatINR(requiredCapital)}, Available: ${formatINR(availableCash)}${maxPossible > 0 ? ` (Max possible: ${maxPossible} shares)` : ''}`, 'error');
       return false;
     }
 
-    const tradeAmount = Math.min(allocAmount, availableCash);
-    const qty = Math.max(1, Math.floor(tradeAmount / currentPrice));
     const tradeId = 'pt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
 
     const numSl = parseFloat(sl) || (side === 'BUY' ? +(currentPrice * 0.995).toFixed(2) : +(currentPrice * 1.005).toFixed(2));
@@ -125,7 +138,7 @@ window.PaperTrading = (() => {
     saveToStorage();
     renderUI();
 
-    showNotification(`⚡ [PAPER ${side}] ${qty}x ${symbol} @ ${formatINR(currentPrice)} | Target: ${formatINR(position.t1)}`, 'success');
+    showNotification(`⚡ [PAPER ${side}] ${qty} shares of ${symbol} @ ${formatINR(currentPrice)} | Target: ${formatINR(position.t1)}`, 'success');
     return true;
   }
 
@@ -424,6 +437,7 @@ window.PaperTrading = (() => {
     getPositions: () => positions,
     getWallet: () => wallet,
     getHistory: () => history,
+    getAvailableCash: () => getAvailableCash(),
   };
 
 })();
