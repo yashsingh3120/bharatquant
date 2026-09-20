@@ -33,35 +33,13 @@
       <nav class="nav-modes" aria-label="Trading Mode">
         <a href="index.html" class="nav-mode-btn active">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          📊 Swing & Positional AI
+          📊 Swing AI
         </a>
         <a href="intraday.html" class="nav-mode-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          ⚡ Intraday Scalper AI
+          ⚡ Intraday AI
         </a>
       </nav>
-
-      <!-- Virtual Paper Wallet Header -->
-      <div class="paper-wallet-bar" id="paperWalletBar">
-        <div class="wallet-item">
-          <span class="w-lbl">Virtual Cash</span>
-          <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
-        </div>
-        <div class="wallet-item">
-          <span class="w-lbl">Live P&L</span>
-          <strong class="w-val pnl-val" id="paperTotalPnL">+₹0.00</strong>
-        </div>
-        <div class="wallet-item">
-          <span class="w-lbl">Win Rate</span>
-          <strong class="w-val" id="paperWinRate">—</strong>
-        </div>
-        <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
-          📋 Trade Book (<span id="paperOpenCount">0</span>)
-        </button>
-        <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
-          🔄
-        </button>
-      </div>
 
       <div class="header-center">
         <div class="market-ticker" id="marketTicker">
@@ -84,6 +62,24 @@
       </div>
 
       <div class="header-right">
+        <!-- Virtual Paper Wallet Header Widget -->
+        <div class="paper-wallet-bar" id="paperWalletBar">
+          <div class="wallet-item">
+            <span class="w-lbl">Cash</span>
+            <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
+          </div>
+          <div class="wallet-item">
+            <span class="w-lbl">P&L</span>
+            <strong class="w-val pnl-val" id="paperTotalPnL">+₹0.00</strong>
+          </div>
+          <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
+            📋 Trade Book (<span id="paperOpenCount">0</span>)
+          </button>
+          <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
+            🔄
+          </button>
+        </div>
+
         <div class="market-clock" id="marketClock">--:--:--</div>
         <div class="market-status" id="marketStatus">
           <span class="status-dot"></span>

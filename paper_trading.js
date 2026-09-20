@@ -4,7 +4,7 @@
 // Live P&L Calculation, and Trade Book Analytics
 // ============================================================
 
-const PaperTrading = (() => {
+window.PaperTrading = (() => {
   'use strict';
 
   const STORAGE_KEYS = {
@@ -368,3 +368,4 @@ const PaperTrading = (() => {
   };
 
 })();
+var PaperTrading = window.PaperTrading;

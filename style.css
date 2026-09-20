@@ -167,15 +167,17 @@ body {
 
 .header-center {
   flex: 1;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-width: 0;
 }
 .market-ticker {
   display: flex;
-  gap: 24px;
+  gap: 14px;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  flex-wrap: nowrap;
 }
 .ticker-item {
   display: flex;
