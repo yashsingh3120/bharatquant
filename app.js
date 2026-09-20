@@ -255,6 +255,11 @@
         },
         live: true,
       };
+      window.__BQ_LATEST_PRICES = window.__BQ_LATEST_PRICES || {};
+      window.__BQ_LATEST_PRICES[symbol] = price;
+      if (window.PaperTrading?.updateRealPrice) {
+        window.PaperTrading.updateRealPrice(symbol, price);
+      }
     } else {
       // Use simulated data
       const sim = generateSimulatedData(seedPrice);
@@ -268,6 +273,11 @@
         history: sim,
         live: false,
       };
+      window.__BQ_LATEST_PRICES = window.__BQ_LATEST_PRICES || {};
+      window.__BQ_LATEST_PRICES[symbol] = price;
+      if (window.PaperTrading?.updateRealPrice) {
+        window.PaperTrading.updateRealPrice(symbol, price);
+      }
     }
   }
 

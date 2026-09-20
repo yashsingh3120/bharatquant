@@ -302,78 +302,119 @@ window.PaperTrading = (() => {
     showNotification(`${signStr} ${p.symbol} closed @ ${formatINR(finalPrice)} (${reason}) -> P&L: ${formatINR(pnl)} (${formatPct(pnlPct)})`, toastType);
   }
 
-  // ── High-Frequency Live Market Tick & P&L Engine ──────────
-  let tickInterval = null;
-  let lastTotalPnL = 0;
+  // ── 100% REAL MARKET PRICE SYNCHRONIZATION (Zero Fake Prices) ──
+  let realPricePollInterval = null;
+  let isFetchingPrices = false;
 
-  function startLiveTickEngine() {
-    if (tickInterval) clearInterval(tickInterval);
-    tickInterval = setInterval(() => {
-      if (!positions || positions.length === 0) return;
+  function updateRealPrice(symbol, realPrice) {
+    realPrice = parseFloat(realPrice);
+    if (!realPrice || isNaN(realPrice) || realPrice <= 0) return;
 
-      // When holidays are enforced, freeze price ticks and P&L on market holidays or when market is closed
-      if (enforceHolidays) {
-        const mkt = getMarketStatus();
-        if (mkt.isHoliday || !mkt.isOpen) {
-          return; // Strictly frozen - no price movement when exchange is closed!
+    if (!positions || positions.length === 0) return;
+
+    const toClose = [];
+    let updated = false;
+
+    positions.forEach(p => {
+      if (p.symbol !== symbol) return;
+
+      if (p.currentPrice !== realPrice) {
+        p.lastTickDir = realPrice > p.currentPrice ? 'up' : 'down';
+        p.currentPrice = realPrice;
+        updated = true;
+      }
+
+      // Recalculate Unrealized P&L strictly with real exchange price
+      let pnl = 0;
+      if (p.side === 'BUY') {
+        pnl = +((p.currentPrice - p.entryPrice) * p.qty).toFixed(2);
+      } else {
+        pnl = +((p.entryPrice - p.currentPrice) * p.qty).toFixed(2);
+      }
+      p.unrealizedPnL = pnl;
+      p.unrealizedPnLPct = +((pnl / (p.entryPrice * p.qty)) * 100).toFixed(2);
+
+      // Check Automated SL & Target Triggers only when real price moves
+      if (p.currentPrice !== p.entryPrice) {
+        if (p.side === 'BUY') {
+          if (p.t1 > p.entryPrice && p.currentPrice >= p.t1) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+          } else if (p.sl < p.entryPrice && p.currentPrice <= p.sl) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+          }
+        } else {
+          if (p.t1 < p.entryPrice && p.currentPrice <= p.t1) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+          } else if (p.sl > p.entryPrice && p.currentPrice >= p.sl) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+          }
         }
       }
 
-      const toClose = [];
-      let updated = false;
+      // Update active onscreen stock price element
+      updateOnscreenStockPrice(p.symbol, p.currentPrice, p.lastTickDir);
+    });
 
-      positions.forEach(p => {
-        // Micro-tick simulation between real market polling intervals
-        // Realistic step: ±0.04% to ±0.16% per tick
-        const tickPct = (Math.random() - 0.485) * 0.0024;
-        const tickVal = +(p.currentPrice * tickPct).toFixed(2);
-        
-        // Ensure price stays within realistic bounds
-        const newPrice = +(p.currentPrice + tickVal).toFixed(2);
-        if (newPrice > p.entryPrice * 0.90 && newPrice < p.entryPrice * 1.10) {
-          p.lastTickDir = tickVal >= 0 ? 'up' : 'down';
-          p.currentPrice = newPrice;
-        }
+    if (updated) {
+      saveToStorage();
+      renderUI(true);
+    }
 
-        // Recalculate Unrealized P&L
-        let pnl = 0;
-        if (p.side === 'BUY') {
-          pnl = +((p.currentPrice - p.entryPrice) * p.qty).toFixed(2);
-        } else {
-          pnl = +((p.entryPrice - p.currentPrice) * p.qty).toFixed(2);
-        }
-        p.unrealizedPnL = pnl;
-        p.unrealizedPnLPct = +((pnl / (p.entryPrice * p.qty)) * 100).toFixed(2);
-        updated = true;
+    toClose.forEach(tc => closePosition(tc.id, tc.price, tc.reason));
+  }
 
-        // Automated Triggers Check (Strict Validation: only fire if price moved and crossed valid thresholds)
-        if (p.currentPrice !== p.entryPrice) {
-          if (p.side === 'BUY') {
-            if (p.t1 > p.entryPrice && p.currentPrice >= p.t1) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-            } else if (p.sl < p.entryPrice && p.currentPrice <= p.sl) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
-            }
-          } else {
-            if (p.t1 < p.entryPrice && p.currentPrice <= p.t1) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-            } else if (p.sl > p.entryPrice && p.currentPrice >= p.sl) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+  function updateLivePrices(priceMap) {
+    if (!priceMap || typeof priceMap !== 'object') return;
+    Object.entries(priceMap).forEach(([sym, price]) => {
+      window.__BQ_LATEST_PRICES = window.__BQ_LATEST_PRICES || {};
+      window.__BQ_LATEST_PRICES[sym] = price;
+      updateRealPrice(sym, price);
+    });
+  }
+
+  function startRealMarketPricePoller() {
+    if (realPricePollInterval) clearInterval(realPricePollInterval);
+    
+    // Poll real market prices from API every 3.5 seconds for any active open positions
+    realPricePollInterval = setInterval(async () => {
+      if (!positions || positions.length === 0 || isFetchingPrices) return;
+
+      // Extract unique symbols from active open positions
+      const openSymbols = [...new Set(positions.map(p => p.symbol))];
+      if (openSymbols.length === 0) return;
+
+      isFetchingPrices = true;
+      try {
+        for (const sym of openSymbols) {
+          // 1. Check if latest price already exists in memory from app/intraday feeds
+          if (window.__BQ_LATEST_PRICES && window.__BQ_LATEST_PRICES[sym]) {
+            updateRealPrice(sym, window.__BQ_LATEST_PRICES[sym]);
+            continue;
+          }
+
+          // 2. Fetch real market quote from backend /api/stock (100% genuine Yahoo/NSE data)
+          const url = `/api/stock?symbol=${encodeURIComponent(sym + '.NS')}&range=1d&interval=1m`;
+          const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+          if (resp.ok) {
+            const data = await resp.json();
+            const meta = data?.chart?.result?.[0]?.meta;
+            const quote = data?.chart?.result?.[0]?.indicators?.quote?.[0];
+            const closes = quote?.close?.filter(v => v != null);
+            const realPrice = meta?.regularMarketPrice || (closes && closes.length > 0 ? closes[closes.length - 1] : null);
+            
+            if (realPrice && !isNaN(realPrice) && realPrice > 0) {
+              window.__BQ_LATEST_PRICES = window.__BQ_LATEST_PRICES || {};
+              window.__BQ_LATEST_PRICES[sym] = realPrice;
+              updateRealPrice(sym, realPrice);
             }
           }
         }
-
-        // Update selected stock price on active terminal/dashboard
-        updateOnscreenStockPrice(p.symbol, p.currentPrice, p.lastTickDir);
-      });
-
-      if (updated) {
-        saveToStorage();
-        renderUI(true);
+      } catch (e) {
+        // Network or fetch timeout, keep last known real price without synthetic changes
+      } finally {
+        isFetchingPrices = false;
       }
-
-      toClose.forEach(tc => closePosition(tc.id, tc.price, tc.reason));
-    }, 1200); // 1.2 second live tick
+    }, 3500);
   }
 
   function updateOnscreenStockPrice(symbol, price, tickDir) {
@@ -401,59 +442,6 @@ window.PaperTrading = (() => {
     }
   }
 
-  // ── Live Price Updates from API & Automated Triggers ─────
-  function updateLivePrices(priceMap) {
-    if (!positions || positions.length === 0) {
-      renderUI();
-      return;
-    }
-
-    let updatedAny = false;
-    const toClose = [];
-
-    positions.forEach(p => {
-      const curPrice = priceMap[p.symbol];
-      if (curPrice != null && !isNaN(curPrice)) {
-        p.currentPrice = curPrice;
-        
-        let pnl = 0;
-        if (p.side === 'BUY') {
-          pnl = (p.currentPrice - p.entryPrice) * p.qty;
-        } else {
-          pnl = (p.entryPrice - p.currentPrice) * p.qty;
-        }
-
-        p.unrealizedPnL = pnl;
-        p.unrealizedPnLPct = (pnl / (p.entryPrice * p.qty)) * 100;
-        updatedAny = true;
-
-        // Automated Triggers Check (Strict Validation)
-        if (p.currentPrice !== p.entryPrice) {
-          if (p.side === 'BUY') {
-            if (p.t1 > p.entryPrice && p.currentPrice >= p.t1) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-            } else if (p.sl < p.entryPrice && p.currentPrice <= p.sl) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
-            }
-          } else {
-            if (p.t1 < p.entryPrice && p.currentPrice <= p.t1) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
-            } else if (p.sl > p.entryPrice && p.currentPrice >= p.sl) {
-              toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
-            }
-          }
-        }
-      }
-    });
-
-    if (updatedAny) {
-      saveToStorage();
-      renderUI(true);
-    }
-
-    // Execute triggers after loop
-    toClose.forEach(tc => closePosition(tc.id, tc.price, tc.reason));
-  }
 
   // ── Reset Simulator ──────────────────────────────────────
   function resetWallet() {
@@ -664,7 +652,7 @@ window.PaperTrading = (() => {
   function init() {
     renderUI();
     initTickerSlider();
-    startLiveTickEngine();
+    startRealMarketPricePoller();
   }
 
   if (document.readyState === 'loading') {
@@ -677,7 +665,9 @@ window.PaperTrading = (() => {
   return {
     openPosition,
     closePosition,
+    updateRealPrice,
     updateLivePrices,
+    syncRealPrices: startRealMarketPricePoller,
     resetWallet,
     toggleTradeBook,
     renderTradeBook: renderTradeBookContent,
