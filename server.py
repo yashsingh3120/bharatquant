@@ -13,10 +13,34 @@ import json
 import time
 import sys
 import os
+import threading
 
 PORT = int(os.environ.get('PORT', 8080))
 CACHE_TTL = 15  # Cache stock quotes for 15 seconds to be fast & respect rate limits
 cache = {}  # key -> (timestamp, data_bytes)
+
+def keep_alive_worker():
+    """
+    Background daemon that pings the server every 11 minutes (660s)
+    to prevent Render/free-tier cloud services from sleeping due to inactivity.
+    Render automatically provides the RENDER_EXTERNAL_URL environment variable.
+    """
+    time.sleep(25)  # Wait for server to bind and start
+    while True:
+        url = os.environ.get('RENDER_EXTERNAL_URL') or os.environ.get('KEEP_ALIVE_URL')
+        if url:
+            try:
+                ping_url = f"{url.rstrip('/')}/api/health"
+                req = urllib.request.Request(
+                    ping_url,
+                    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) BharatQuant-KeepAlive/1.0'}
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    print(f"[KEEP-ALIVE] Pinged {ping_url} -> Status: {resp.getcode()}", file=sys.stderr)
+            except Exception as e:
+                print(f"[KEEP-ALIVE] Ping notification: {e}", file=sys.stderr)
+        time.sleep(11 * 60)  # Ping every 11 minutes (well before Render's 15-minute sleep threshold)
+
 
 class BharatQuantHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -119,6 +143,8 @@ if __name__ == '__main__':
     web_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(web_dir)
     print(f"Starting BharatQuant Live Server on port {PORT} (dir: {web_dir})...")
+    # Start Keep-Alive daemon to prevent cloud sleep (Render 24/7 active)
+    threading.Thread(target=keep_alive_worker, daemon=True).start()
     with ThreadedTCPServer(("0.0.0.0", PORT), BharatQuantHandler) as httpd:
         try:
             httpd.serve_forever()
