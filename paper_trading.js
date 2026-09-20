@@ -83,23 +83,28 @@ const PaperTrading = (() => {
 
   // ── 1-Click Order Execution ──────────────────────────────
   function openPosition(symbol, side, currentPrice, sl, t1, t2, allocAmount = 25000) {
-    if (!currentPrice || currentPrice <= 0) {
-      showNotification('❌ Invalid price for order execution', 'error');
+    currentPrice = parseFloat(currentPrice);
+    if (!currentPrice || isNaN(currentPrice) || currentPrice <= 0) {
+      showNotification('❌ Waiting for live stock price before order execution...', 'error');
       return false;
     }
 
     // Check available cash
     const activeMarginUsed = positions.reduce((sum, p) => sum + (p.entryPrice * p.qty), 0);
-    const availableCash = wallet.balance - activeMarginUsed;
+    const availableCash = Math.max(0, wallet.balance - activeMarginUsed);
 
-    const tradeAmount = Math.min(allocAmount, availableCash);
-    if (tradeAmount < currentPrice) {
-      showNotification(`⚠️ Insufficient cash! Available: ${formatINR(availableCash)}`, 'error');
+    if (availableCash < currentPrice) {
+      showNotification(`⚠️ Insufficient cash (${formatINR(availableCash)}). Click 🔄 to reset wallet to ₹1,00,000!`, 'error');
       return false;
     }
 
+    const tradeAmount = Math.min(allocAmount, availableCash);
     const qty = Math.max(1, Math.floor(tradeAmount / currentPrice));
     const tradeId = 'pt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+
+    const numSl = parseFloat(sl) || (side === 'BUY' ? +(currentPrice * 0.995).toFixed(2) : +(currentPrice * 1.005).toFixed(2));
+    const numT1 = parseFloat(t1) || (side === 'BUY' ? +(currentPrice * 1.01).toFixed(2) : +(currentPrice * 0.99).toFixed(2));
+    const numT2 = parseFloat(t2) || (side === 'BUY' ? +(currentPrice * 1.02).toFixed(2) : +(currentPrice * 0.98).toFixed(2));
 
     const position = {
       id: tradeId,
@@ -108,9 +113,9 @@ const PaperTrading = (() => {
       qty: qty,
       entryPrice: currentPrice,
       currentPrice: currentPrice,
-      sl: sl || (side === 'BUY' ? +(currentPrice * 0.995).toFixed(2) : +(currentPrice * 1.005).toFixed(2)),
-      t1: t1 || (side === 'BUY' ? +(currentPrice * 1.01).toFixed(2) : +(currentPrice * 0.99).toFixed(2)),
-      t2: t2 || (side === 'BUY' ? +(currentPrice * 1.02).toFixed(2) : +(currentPrice * 0.98).toFixed(2)),
+      sl: numSl,
+      t1: numT1,
+      t2: numT2,
       time: getISTTime(),
       unrealizedPnL: 0,
       unrealizedPnLPct: 0,
@@ -120,7 +125,7 @@ const PaperTrading = (() => {
     saveToStorage();
     renderUI();
 
-    showNotification(`⚡ [PAPER ${side}] ${qty}x ${symbol} executed @ ${formatINR(currentPrice)} | T1: ${formatINR(position.t1)}`, 'success');
+    showNotification(`⚡ [PAPER ${side}] ${qty}x ${symbol} @ ${formatINR(currentPrice)} | Target: ${formatINR(position.t1)}`, 'success');
     return true;
   }
 
@@ -255,7 +260,10 @@ const PaperTrading = (() => {
     const totalTrades = wallet.wins + wallet.losses;
     const winRate = totalTrades > 0 ? ((wallet.wins / totalTrades) * 100).toFixed(1) : '—';
 
-    if (balanceEl) balanceEl.textContent = formatINR(wallet.balance + totalUnrealized);
+    const activeMarginUsed = positions.reduce((sum, p) => sum + (p.entryPrice * p.qty), 0);
+    const availableCash = Math.max(0, wallet.balance - activeMarginUsed);
+
+    if (balanceEl) balanceEl.textContent = formatINR(availableCash);
     if (pnlEl) {
       const isUp = totalPnL >= 0;
       pnlEl.textContent = `${isUp ? '+' : ''}${formatINR(totalPnL)}`;
@@ -263,6 +271,8 @@ const PaperTrading = (() => {
     }
     if (winRateEl) winRateEl.textContent = winRate !== '—' ? `${winRate}% (${wallet.wins}W / ${wallet.losses}L)` : '0 Trades';
     if (openCountEl) openCountEl.textContent = positions.length;
+    const tabCountEl = document.getElementById('paperTabOpenCount');
+    if (tabCountEl) tabCountEl.textContent = positions.length;
 
     // 2. Update Modal Trade Book if open
     renderTradeBookContent();

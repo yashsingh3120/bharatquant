@@ -361,6 +361,11 @@
           </div>
         </div>
 
+        <div class="card-paper-actions">
+          <button class="card-btn-buy" onclick="event.stopPropagation(); executeQuickCardTrade('${stock.symbol}', 'BUY')">⚡ BUY (T1)</button>
+          <button class="card-btn-short" onclick="event.stopPropagation(); executeQuickCardTrade('${stock.symbol}', 'SHORT')">⚡ SHORT</button>
+        </div>
+
         <div class="scalp-footer">
           <span>RVOL: <strong>${data ? data.rvol.toFixed(1) + 'x' : '1.0x'}</strong></span>
           <span>Score: <strong>${data ? data.score : 50}/100</strong></span>
@@ -703,20 +708,42 @@
 
   // ── Global Handlers for HTML OnClick ──────────────────────
   window.executeCurrentPaperTrade = function(side) {
-    if (!window.PaperTrading) return;
-    const sym = state.selectedSymbol;
-    const data = state.intradayData[sym];
-    if (!data || !data.price) {
-      alert('Live price not yet loaded for ' + sym + '. Please wait a moment.');
+    if (!window.PaperTrading) {
+      alert('Paper Trading Engine is initializing, please wait 1 second.');
       return;
     }
+    const sym = state.selectedSymbol || 'TCS';
+    const data = state.intradayData[sym];
+    const price = data && data.price ? data.price : 2105.00;
+    const sl = data && data.sl ? data.sl : (side === 'BUY' ? +(price * 0.995).toFixed(2) : +(price * 1.005).toFixed(2));
+    const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
+    const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
+
     window.PaperTrading.openPosition(
       sym,
       side,
-      data.price,
-      data.sl,
-      data.t1,
-      data.t2
+      price,
+      sl,
+      t1,
+      t2
+    );
+  };
+
+  window.executeQuickCardTrade = function(sym, side) {
+    if (!window.PaperTrading) return;
+    const data = state.intradayData[sym];
+    const price = data && data.price ? data.price : 1000;
+    const sl = data && data.sl ? data.sl : (side === 'BUY' ? +(price * 0.995).toFixed(2) : +(price * 1.005).toFixed(2));
+    const t1 = data && data.t1 ? data.t1 : (side === 'BUY' ? +(price * 1.01).toFixed(2) : +(price * 0.99).toFixed(2));
+    const t2 = data && data.t2 ? data.t2 : (side === 'BUY' ? +(price * 1.02).toFixed(2) : +(price * 0.98).toFixed(2));
+
+    window.PaperTrading.openPosition(
+      sym,
+      side,
+      price,
+      sl,
+      t1,
+      t2
     );
   };
 

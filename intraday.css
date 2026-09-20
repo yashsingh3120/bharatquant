@@ -886,12 +886,60 @@ body {
 
 /* Chart Container */
 .intraday-chart-container {
-  height: 290px;
+  height: 220px;
   width: 100%;
   border-radius: var(--radius-sm);
   background: #080B13;
   border: 1px solid var(--border-subtle);
   overflow: hidden;
+}
+
+/* Quick 1-Click Execution Buttons on Scanner Cards */
+.card-paper-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.card-btn-buy, .card-btn-short {
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-btn-buy {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.12));
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+}
+
+.card-btn-buy:hover {
+  background: var(--neon-green);
+  color: #000;
+  box-shadow: 0 0 12px var(--neon-green-glow);
+  transform: translateY(-1px);
+}
+
+.card-btn-short {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(244, 63, 94, 0.12));
+  color: var(--neon-red);
+  border: 1px solid var(--neon-red);
+}
+
+.card-btn-short:hover {
+  background: var(--neon-red);
+  color: #fff;
+  box-shadow: 0 0 12px var(--neon-red-glow);
+  transform: translateY(-1px);
 }
 
 /* Trade Ticket Box */

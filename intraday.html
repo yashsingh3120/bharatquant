@@ -24,23 +24,21 @@
         </div>
         <div class="brand-title">
           BharatQuant
-          <span class="scalper-tag">⚡ Intraday Scalper</span>
+          <span class="scalper-tag">⚡ Scalper</span>
         </div>
       </div>
 
       <!-- Mode Switcher Navigation -->
       <nav class="nav-modes" aria-label="Trading Mode">
         <a href="index.html" class="nav-mode-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          📊 Swing & Positional AI
+          📊 Swing AI
         </a>
         <a href="intraday.html" class="nav-mode-btn active">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          ⚡ Intraday Scalper AI
+          ⚡ Intraday AI
         </a>
       </nav>
 
-      <!-- Market Indices Strip -->
+      <!-- Key Indices Strip (Nifty & Bank Nifty) -->
       <div class="market-ticker-strip">
         <div class="ticker-item">
           <span class="ticker-name">NIFTY</span>
@@ -52,26 +50,20 @@
           <span class="ticker-val" id="bankniftyPrice">—</span>
           <span class="ticker-chg" id="bankniftyChange">—</span>
         </div>
-        <div class="ticker-item">
-          <span class="ticker-name">INDIA VIX</span>
-          <span class="ticker-val" id="vixPrice">—</span>
-          <span class="ticker-chg" id="vixChange">—</span>
-        </div>
       </div>
 
-      <!-- Right Header Actions (Clock & Paper Wallet) -->
+      <!-- Right Header Actions (Clock & Paper Wallet - Guaranteed to Fit!) -->
       <div class="header-right-actions">
-        <!-- Live Market Clock (Always Visible) -->
+        <!-- Live Market Clock -->
         <div class="status-badge" id="headerClockBadge">
           <span class="pulse-dot"></span>
           <span id="marketClock">--:--:--</span>
-          <span class="live-pill">LIVE 5M</span>
         </div>
 
-        <!-- Virtual Paper Wallet Header -->
+        <!-- Virtual Paper Wallet Header Widget -->
         <div class="paper-wallet-bar" id="paperWalletBar">
           <div class="wallet-item">
-            <span class="w-lbl">Virtual Cash</span>
+            <span class="w-lbl">Cash</span>
             <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
           </div>
           <div class="wallet-item">
@@ -81,7 +73,7 @@
           <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
             📋 Trade Book (<span id="paperOpenCount">0</span>)
           </button>
-          <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
+          <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset wallet to ₹1,00,000">
             🔄
           </button>
         </div>
@@ -143,6 +135,18 @@
         </div>
       </div>
 
+      <!-- ⚡ 1-CLICK PAPER TRADING EXECUTION (PROMINENT AT TOP - NO SCROLL NEEDED!) -->
+      <div class="paper-action-btns">
+        <button class="paper-btn buy btn-paper-buy" id="btnPaperBuy" onclick="executeCurrentPaperTrade('BUY')">
+          <span class="btn-main-label">🟢 ⚡ PAPER BUY (LONG)</span>
+          <span class="btn-sub-label" id="intradayBuySub">Target: +1.0% | SL: -0.5%</span>
+        </button>
+        <button class="paper-btn sell btn-paper-short" id="btnPaperShort" onclick="executeCurrentPaperTrade('SHORT')">
+          <span class="btn-main-label">🔴 ⚡ PAPER SHORT</span>
+          <span class="btn-sub-label" id="intradayShortSub">Target: -1.0% | SL: +0.5%</span>
+        </button>
+      </div>
+
       <!-- Chart Control & Timeframe Selector -->
       <div class="chart-header-row">
         <span class="chart-title">Intraday Candlesticks & VWAP</span>
@@ -190,18 +194,6 @@
           </div>
         </div>
 
-        <!-- 1-Click Paper Trading Quick Execution Buttons -->
-        <div class="paper-action-btns">
-          <button class="paper-btn buy btn-paper-buy" id="btnPaperBuy" onclick="executeCurrentPaperTrade('BUY')">
-            <span class="btn-main-label">⚡ PAPER BUY (LONG)</span>
-            <span class="btn-sub-label" id="intradayBuySub">Target 1 & SL Managed</span>
-          </button>
-          <button class="paper-btn sell btn-paper-short" id="btnPaperShort" onclick="executeCurrentPaperTrade('SHORT')">
-            <span class="btn-main-label">⚡ PAPER SHORT</span>
-            <span class="btn-sub-label" id="intradayShortSub">Target 1 & SL Managed</span>
-          </button>
-        </div>
-
         <!-- Technical Checklist -->
         <div class="scalp-checklist">
           <div class="check-item">
@@ -225,7 +217,6 @@
             <strong class="check-status" id="chkRVOL">1.4x (HIGH SURGE)</strong>
           </div>
         </div>
-      </div>
     </aside>
 
   </main>
