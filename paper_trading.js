@@ -311,6 +311,14 @@ window.PaperTrading = (() => {
     tickInterval = setInterval(() => {
       if (!positions || positions.length === 0) return;
 
+      // When holidays are enforced, freeze price ticks and P&L on market holidays or when market is closed
+      if (enforceHolidays) {
+        const mkt = getMarketStatus();
+        if (mkt.isHoliday || !mkt.isOpen) {
+          return; // Strictly frozen - no price movement when exchange is closed!
+        }
+      }
+
       const toClose = [];
       let updated = false;
 
