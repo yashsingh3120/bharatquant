@@ -1371,6 +1371,43 @@ body {
   text-shadow: 0 0 8px rgba(244, 63, 94, 0.25);
 }
 
+/* Live Dynamic P&L & Price Tick Animations */
+@keyframes pnlFlashUp {
+  0% { color: #10B981; text-shadow: 0 0 16px rgba(16, 185, 129, 0.9); transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pnlFlashDown {
+  0% { color: #F43F5E; text-shadow: 0 0 16px rgba(244, 63, 94, 0.9); transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.pnl-flash-up {
+  animation: pnlFlashUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pnl-flash-down {
+  animation: pnlFlashDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.price-flash-up {
+  animation: pnlFlashUp 0.4s ease-out;
+}
+
+.price-flash-down {
+  animation: pnlFlashDown 0.4s ease-out;
+}
+
+.tick-up {
+  color: #10B981 !important;
+  transition: color 0.3s ease;
+}
+
+.tick-down {
+  color: #F43F5E !important;
+  transition: color 0.3s ease;
+}
+
 .btn-tradebook {
   background: rgba(6, 182, 212, 0.12);
   border: 1px solid rgba(6, 182, 212, 0.4);

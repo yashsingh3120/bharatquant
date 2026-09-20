@@ -191,7 +191,96 @@ window.PaperTrading = (() => {
     showNotification(`${signStr} ${p.symbol} closed @ ${formatINR(finalPrice)} (${reason}) -> P&L: ${formatINR(pnl)} (${formatPct(pnlPct)})`, toastType);
   }
 
-  // ── Live Price Updates & Automated Triggers ──────────────
+  // ── High-Frequency Live Market Tick & P&L Engine ──────────
+  let tickInterval = null;
+  let lastTotalPnL = 0;
+
+  function startLiveTickEngine() {
+    if (tickInterval) clearInterval(tickInterval);
+    tickInterval = setInterval(() => {
+      if (!positions || positions.length === 0) return;
+
+      const toClose = [];
+      let updated = false;
+
+      positions.forEach(p => {
+        // Micro-tick simulation between real market polling intervals
+        // Realistic step: ±0.04% to ±0.16% per tick
+        const tickPct = (Math.random() - 0.485) * 0.0024;
+        const tickVal = +(p.currentPrice * tickPct).toFixed(2);
+        
+        // Ensure price stays within realistic bounds
+        const newPrice = +(p.currentPrice + tickVal).toFixed(2);
+        if (newPrice > p.entryPrice * 0.90 && newPrice < p.entryPrice * 1.10) {
+          p.lastTickDir = tickVal >= 0 ? 'up' : 'down';
+          p.currentPrice = newPrice;
+        }
+
+        // Recalculate Unrealized P&L
+        let pnl = 0;
+        if (p.side === 'BUY') {
+          pnl = +((p.currentPrice - p.entryPrice) * p.qty).toFixed(2);
+        } else {
+          pnl = +((p.entryPrice - p.currentPrice) * p.qty).toFixed(2);
+        }
+        p.unrealizedPnL = pnl;
+        p.unrealizedPnLPct = +((pnl / (p.entryPrice * p.qty)) * 100).toFixed(2);
+        updated = true;
+
+        // Automated Triggers Check
+        if (p.side === 'BUY') {
+          if (p.currentPrice >= p.t1 && p.t1 > 0) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+          } else if (p.currentPrice <= p.sl && p.sl > 0) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+          }
+        } else {
+          if (p.currentPrice <= p.t1 && p.t1 > 0) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'TARGET 1 HIT 🎯' });
+          } else if (p.currentPrice >= p.sl && p.sl > 0) {
+            toClose.push({ id: p.id, price: p.currentPrice, reason: 'STOP LOSS HIT 🛡️' });
+          }
+        }
+
+        // Update selected stock price on active terminal/dashboard
+        updateOnscreenStockPrice(p.symbol, p.currentPrice, p.lastTickDir);
+      });
+
+      if (updated) {
+        saveToStorage();
+        renderUI(true);
+      }
+
+      toClose.forEach(tc => closePosition(tc.id, tc.price, tc.reason));
+    }, 1200); // 1.2 second live tick
+  }
+
+  function updateOnscreenStockPrice(symbol, price, tickDir) {
+    // Check Intraday Terminal
+    const termSymEl = document.getElementById('termSymbol');
+    if (termSymEl && termSymEl.textContent.trim() === symbol) {
+      const termPriceEl = document.getElementById('termPrice');
+      if (termPriceEl) {
+        termPriceEl.textContent = formatINR(price);
+        termPriceEl.classList.remove('price-flash-up', 'price-flash-down');
+        void termPriceEl.offsetWidth;
+        termPriceEl.classList.add(tickDir === 'up' ? 'price-flash-up' : 'price-flash-down');
+      }
+    }
+    // Check Swing Detail Panel
+    const detailSymEl = document.getElementById('detailSymbol');
+    if (detailSymEl && detailSymEl.textContent.trim() === symbol) {
+      const detailPriceEl = document.getElementById('detailPrice');
+      if (detailPriceEl) {
+        detailPriceEl.textContent = formatINR(price);
+        detailPriceEl.classList.remove('price-flash-up', 'price-flash-down');
+        void detailPriceEl.offsetWidth;
+        detailPriceEl.classList.add(tickDir === 'up' ? 'price-flash-up' : 'price-flash-down');
+      }
+    }
+  }
+
+  // ── Live Price Updates from API & Automated Triggers ─────
   function updateLivePrices(priceMap) {
     if (!positions || positions.length === 0) {
       renderUI();
@@ -236,7 +325,7 @@ window.PaperTrading = (() => {
 
     if (updatedAny) {
       saveToStorage();
-      renderUI();
+      renderUI(true);
     }
 
     // Execute triggers after loop
@@ -261,7 +350,7 @@ window.PaperTrading = (() => {
   }
 
   // ── Render UI Components ─────────────────────────────────
-  function renderUI() {
+  function renderUI(isLiveTick = false) {
     // 1. Update Header Wallet Bar
     const balanceEl = document.getElementById('paperWalletBalance');
     const pnlEl = document.getElementById('paperTotalPnL');
@@ -281,6 +370,13 @@ window.PaperTrading = (() => {
       const isUp = totalPnL >= 0;
       pnlEl.textContent = `${isUp ? '+' : ''}${formatINR(totalPnL)}`;
       pnlEl.className = `pnl-val ${isUp ? 'profit' : 'loss'}`;
+
+      if (isLiveTick && positions.length > 0 && Math.abs(totalPnL - lastTotalPnL) > 0.01) {
+        pnlEl.classList.remove('pnl-flash-up', 'pnl-flash-down');
+        void pnlEl.offsetWidth; // Trigger CSS reflow
+        pnlEl.classList.add(totalPnL >= lastTotalPnL ? 'pnl-flash-up' : 'pnl-flash-down');
+      }
+      lastTotalPnL = totalPnL;
     }
     if (winRateEl) winRateEl.textContent = winRate !== '—' ? `${winRate}% (${wallet.wins}W / ${wallet.losses}L)` : '0 Trades';
     if (openCountEl) openCountEl.textContent = positions.length;
@@ -301,17 +397,18 @@ window.PaperTrading = (() => {
       } else {
         openTable.innerHTML = positions.map(p => {
           const isUp = p.unrealizedPnL >= 0;
+          const tickClass = p.lastTickDir === 'up' ? 'tick-up' : 'tick-down';
           return `
             <tr>
               <td><span style="color:var(--text-muted);font-size:11px;font-family:var(--font-mono);">${p.time}</span></td>
               <td><strong>${p.symbol}</strong></td>
               <td><span class="badge ${p.side === 'BUY' ? 'buy' : 'sell'}">${p.side}</span></td>
-              <td>${p.qty}</td>
+              <td><strong>${p.qty}</strong></td>
               <td>${formatINR(p.entryPrice)}</td>
-              <td><strong>${formatINR(p.currentPrice)}</strong></td>
-              <td>${formatINR(p.t1)}</td>
-              <td>${formatINR(p.sl)}</td>
-              <td class="${isUp ? 'text-profit' : 'text-loss'}"><strong>${formatINR(p.unrealizedPnL)} (${formatPct(p.unrealizedPnLPct)})</strong></td>
+              <td><strong class="${tickClass}">${formatINR(p.currentPrice)}</strong></td>
+              <td style="color:#10B981;">${formatINR(p.t1)}</td>
+              <td style="color:#F43F5E;">${formatINR(p.sl)}</td>
+              <td class="${isUp ? 'text-profit' : 'text-loss'}"><strong>${isUp ? '+' : ''}${formatINR(p.unrealizedPnL)} (${formatPct(p.unrealizedPnLPct)})</strong></td>
               <td><button class="btn-close-pos" onclick="PaperTrading.closePosition('${p.id}')">Exit</button></td>
             </tr>
           `;
@@ -418,6 +515,7 @@ window.PaperTrading = (() => {
   function init() {
     renderUI();
     initTickerSlider();
+    startLiveTickEngine();
   }
 
   if (document.readyState === 'loading') {
