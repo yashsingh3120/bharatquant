@@ -1179,9 +1179,17 @@
     dom.marketClock.textContent = ist.toLocaleTimeString('en-IN', { hour12: false });
 
     const statusEl = dom.marketStatus;
-    const open = isMarketOpen();
-    statusEl.className = `market-status ${open ? 'open' : 'closed'}`;
-    statusEl.querySelector('.status-text').textContent = open ? 'LIVE' : 'CLOSED';
+    const mkt = window.PaperTrading?.getMarketStatus ? window.PaperTrading.getMarketStatus() : { isOpen: isMarketOpen(), isHoliday: false, reason: '' };
+    if (mkt.isHoliday) {
+      statusEl.className = 'market-status closed';
+      statusEl.querySelector('.status-text').textContent = 'HOLIDAY';
+      statusEl.title = `Market Holiday: ${mkt.reason}`;
+    } else {
+      const open = mkt.isOpen;
+      statusEl.className = `market-status ${open ? 'open' : 'closed'}`;
+      statusEl.querySelector('.status-text').textContent = open ? 'LIVE' : 'CLOSED';
+      statusEl.title = open ? 'Market is LIVE (09:15 - 15:30 IST)' : 'Market is CLOSED';
+    }
   }
 
   // ── Market Ticker ─────────────────────────────────────────

@@ -27,6 +27,84 @@ window.PaperTrading = (() => {
   let positions = loadFromStorage(STORAGE_KEYS.POSITIONS, []);
   let history = loadFromStorage(STORAGE_KEYS.HISTORY, []);
 
+  // ── Indian Stock Market (NSE/BSE) Holidays & Session Engine ─
+  const NSE_HOLIDAYS_LIST = [
+    // Annual Fixed National Holidays (MM-DD)
+    '01-26', // Republic Day
+    '05-01', // Maharashtra Day
+    '08-15', // Independence Day
+    '10-02', // Mahatma Gandhi Jayanti
+    '12-25', // Christmas
+
+    // 2024 Holidays
+    '2024-01-22', '2024-03-08', '2024-03-25', '2024-03-29', '2024-04-11',
+    '2024-04-17', '2024-04-21', '2024-06-17', '2024-07-17', '2024-11-01',
+    '2024-11-15', '2024-11-20',
+
+    // 2025 Holidays
+    '2025-02-26', '2025-03-14', '2025-03-31', '2025-04-10', '2025-04-14',
+    '2025-04-18', '2025-05-01', '2025-06-07', '2025-08-27', '2025-10-21',
+    '2025-10-22', '2025-11-05',
+
+    // 2026 Holidays
+    '2026-02-15', '2026-03-04', '2026-03-20', '2026-04-03', '2026-04-14',
+    '2026-05-27', '2026-09-15', '2026-10-20', '2026-11-08', '2026-11-24',
+
+    // 2027 Holidays
+    '2027-03-23', '2027-03-26', '2027-04-07', '2027-04-14', '2027-10-20',
+    '2027-11-10', '2027-11-28',
+  ];
+
+  let enforceHolidays = loadFromStorage('bq_paper_enforce_holidays', true);
+
+  function getMarketStatus() {
+    const now = new Date();
+    const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+
+    const day = ist.getDay(); // 0 = Sun, 6 = Sat
+    const year = ist.getFullYear();
+    const month = String(ist.getMonth() + 1).padStart(2, '0');
+    const date = String(ist.getDate()).padStart(2, '0');
+    const ymd = `${year}-${month}-${date}`;
+    const md = `${month}-${date}`;
+
+    // 1. Weekend Check
+    if (day === 0) {
+      return { isOpen: false, isHoliday: true, reason: 'Sunday (Weekend Market Holiday)' };
+    }
+    if (day === 6) {
+      return { isOpen: false, isHoliday: true, reason: 'Saturday (Weekend Market Holiday)' };
+    }
+
+    // 2. Official NSE Exchange Holiday Check
+    if (NSE_HOLIDAYS_LIST.includes(ymd) || NSE_HOLIDAYS_LIST.includes(md)) {
+      return { isOpen: false, isHoliday: true, reason: 'Official NSE Stock Market Holiday' };
+    }
+
+    // 3. Regular Market Trading Hours: 09:15 AM to 03:30 PM IST
+    const minutes = ist.getHours() * 60 + ist.getMinutes();
+    if (minutes < 555) {
+      return { isOpen: false, isHoliday: false, reason: 'Pre-Market (Opens at 09:15 AM IST)' };
+    }
+    if (minutes > 930) {
+      return { isOpen: false, isHoliday: false, reason: 'Post-Market (Closed at 03:30 PM IST)' };
+    }
+
+    return { isOpen: true, isHoliday: false, reason: 'Live Market Open' };
+  }
+
+  function toggleHolidayEnforcement(enabled) {
+    enforceHolidays = !!enabled;
+    try {
+      localStorage.setItem('bq_paper_enforce_holidays', JSON.stringify(enforceHolidays));
+    } catch (e) {}
+    showNotification(enforceHolidays 
+      ? '🛡️ Market Holiday Rules: STRICTLY ENFORCED (Buy/sell blocked on holidays & weekends)' 
+      : '⚠️ Market Holiday Rules: DISABLED (Weekend Practice Mode Enabled)', 
+      enforceHolidays ? 'info' : 'warning');
+    renderUI();
+  }
+
   function loadFromStorage(key, fallback) {
     try {
       const data = localStorage.getItem(key);
@@ -89,6 +167,19 @@ window.PaperTrading = (() => {
 
   // ── 1-Click Order Execution with User-Custom Quantity ────
   function openPosition(symbol, side, currentPrice, sl, t1, t2, userCustomQty = null) {
+    // ── Check Stock Market Holiday & Market Hours ────────────
+    if (enforceHolidays) {
+      const mkt = getMarketStatus();
+      if (mkt.isHoliday) {
+        showNotification(`🚫 Market Holiday! Today is ${mkt.reason}. Stock buy/sell is disabled on exchange holidays.`, 'error');
+        return false;
+      }
+      if (!mkt.isOpen) {
+        showNotification(`🚫 Market Closed! ${mkt.reason}. Trading hours: Mon-Fri, 9:15 AM - 3:30 PM IST.`, 'error');
+        return false;
+      }
+    }
+
     currentPrice = parseFloat(currentPrice);
     if (!currentPrice || isNaN(currentPrice) || currentPrice <= 0) {
       showNotification('❌ Waiting for live stock price before order execution...', 'error');
@@ -407,6 +498,32 @@ window.PaperTrading = (() => {
     const tabCountEl = document.getElementById('paperTabOpenCount');
     if (tabCountEl) tabCountEl.textContent = positions.length;
 
+    // Update Market Holiday Status in Modal
+    const modalBadge = document.getElementById('modalMarketStatusBadge');
+    const chkEnforce = document.getElementById('chkEnforceHolidays');
+    const mkt = getMarketStatus();
+    if (modalBadge) {
+      if (mkt.isHoliday) {
+        modalBadge.textContent = `🔴 ${mkt.reason.toUpperCase()}`;
+        modalBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        modalBadge.style.color = '#EF4444';
+        modalBadge.style.borderColor = '#EF4444';
+      } else if (!mkt.isOpen) {
+        modalBadge.textContent = `🟡 ${mkt.reason.toUpperCase()}`;
+        modalBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+        modalBadge.style.color = '#F59E0B';
+        modalBadge.style.borderColor = '#F59E0B';
+      } else {
+        modalBadge.textContent = `🟢 LIVE MARKET OPEN`;
+        modalBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        modalBadge.style.color = '#10B981';
+        modalBadge.style.borderColor = '#10B981';
+      }
+    }
+    if (chkEnforce) {
+      chkEnforce.checked = enforceHolidays;
+    }
+
     // 2. Update Modal Trade Book if open
     renderTradeBookContent();
   }
@@ -560,6 +677,9 @@ window.PaperTrading = (() => {
     getWallet: () => wallet,
     getHistory: () => history,
     getAvailableCash: () => getAvailableCash(),
+    getMarketStatus,
+    toggleHolidayEnforcement,
+    isHolidayEnforced: () => enforceHolidays,
   };
 
 })();

@@ -633,6 +633,21 @@
       const clockEl = document.getElementById('marketClock');
       if (clockEl) clockEl.textContent = getISTTime();
 
+      const clockBadge = document.getElementById('headerClockBadge');
+      if (clockBadge && window.PaperTrading?.getMarketStatus) {
+        const mkt = window.PaperTrading.getMarketStatus();
+        if (mkt.isHoliday) {
+          clockBadge.title = `Market Holiday: ${mkt.reason}`;
+          clockBadge.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+        } else if (mkt.isOpen) {
+          clockBadge.title = 'Market is LIVE (09:15 - 15:30 IST)';
+          clockBadge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+        } else {
+          clockBadge.title = 'Market is CLOSED';
+          clockBadge.style.borderColor = '';
+        }
+      }
+
       if (state.countdown <= 0) {
         state.countdown = 15;
         runIntradayScan();

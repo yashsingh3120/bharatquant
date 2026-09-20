@@ -365,11 +365,17 @@
   <div class="paper-modal-overlay" id="paperTradeBookModal">
     <div class="paper-modal-box">
       <div class="paper-modal-header">
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <h2>📋 Virtual Trade Book & Portfolio</h2>
-          <span class="detail-grade-badge" style="background:rgba(16,185,129,0.15);color:#10B981;border-color:#10B981;">Paper Simulator</span>
+          <span class="detail-grade-badge" id="modalMarketStatusBadge" style="background:rgba(239,68,68,0.15);color:#EF4444;border-color:#EF4444;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;">🔴 MARKET HOLIDAY</span>
         </div>
-        <button class="btn-modal-close" onclick="PaperTrading.toggleTradeBook()">✕</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text-muted);font-weight:600;" title="When checked, buy/sell is strictly blocked on market holidays and weekends">
+            <input type="checkbox" id="chkEnforceHolidays" checked onchange="PaperTrading.toggleHolidayEnforcement(this.checked)">
+            <span>Enforce Holidays</span>
+          </label>
+          <button class="btn-modal-close" onclick="PaperTrading.toggleTradeBook()">✕</button>
+        </div>
       </div>
 
       <div class="paper-modal-tabs">
