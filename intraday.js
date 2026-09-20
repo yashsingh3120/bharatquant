@@ -430,6 +430,12 @@
     document.getElementById('ticketRR').textContent = data.rr;
     document.getElementById('ticketTrailingSL').textContent = `₹${data.trailingSL}`;
 
+    // Update 1-Click Execution Button Subtitles
+    const buySub = document.getElementById('intradayBuySub');
+    const shortSub = document.getElementById('intradayShortSub');
+    if (buySub) buySub.textContent = `T1: ₹${data.t1} | SL: ₹${data.sl}`;
+    if (shortSub) shortSub.textContent = `T1: ₹${data.t1} | SL: ₹${data.sl}`;
+
     // Technical Checklist
     const vwapPct = (((data.price - data.vwap) / data.vwap) * 100).toFixed(2);
     const vwapEl = document.getElementById('chkVWAP');
@@ -593,6 +599,17 @@
       }));
     }
 
+    // Feed real-time live prices to Paper Trading Engine
+    if (window.PaperTrading) {
+      const priceMap = {};
+      Object.keys(state.intradayData).forEach(sym => {
+        if (state.intradayData[sym] && state.intradayData[sym].price) {
+          priceMap[sym] = state.intradayData[sym].price;
+        }
+      });
+      window.PaperTrading.updateLivePrices(priceMap);
+    }
+
     renderAllCards();
     if (state.selectedSymbol) {
       selectIntradayStock(state.selectedSymbol);
@@ -683,5 +700,41 @@
   } else {
     init();
   }
+
+  // ── Global Handlers for HTML OnClick ──────────────────────
+  window.executeCurrentPaperTrade = function(side) {
+    if (!window.PaperTrading) return;
+    const sym = state.selectedSymbol;
+    const data = state.intradayData[sym];
+    if (!data || !data.price) {
+      alert('Live price not yet loaded for ' + sym + '. Please wait a moment.');
+      return;
+    }
+    window.PaperTrading.openPosition(
+      sym,
+      side,
+      data.price,
+      data.sl,
+      data.t1,
+      data.t2
+    );
+  };
+
+  window.switchPaperTab = function(tabName) {
+    document.querySelectorAll('.paper-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.paper-tab-content').forEach(c => c.classList.remove('active'));
+    
+    if (tabName === 'open') {
+      const btn = document.querySelector('.paper-tab-btn:nth-child(1)');
+      if (btn) btn.classList.add('active');
+      const tab = document.getElementById('tabOpenPositions');
+      if (tab) tab.classList.add('active');
+    } else {
+      const btn = document.querySelector('.paper-tab-btn:nth-child(2)');
+      if (btn) btn.classList.add('active');
+      const tab = document.getElementById('tabTradeHistory');
+      if (tab) tab.classList.add('active');
+    }
+  };
 
 })();

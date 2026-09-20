@@ -59,6 +59,28 @@
         </div>
       </div>
 
+      <!-- Virtual Paper Wallet Header -->
+      <div class="paper-wallet-bar" id="paperWalletBar">
+        <div class="wallet-item">
+          <span class="w-lbl">Virtual Cash</span>
+          <strong class="w-val" id="paperWalletBalance">₹1,00,000</strong>
+        </div>
+        <div class="wallet-item">
+          <span class="w-lbl">Live P&L</span>
+          <strong class="w-val pnl-val" id="paperTotalPnL">+₹0.00</strong>
+        </div>
+        <div class="wallet-item">
+          <span class="w-lbl">Win Rate</span>
+          <strong class="w-val" id="paperWinRate">—</strong>
+        </div>
+        <button class="btn-tradebook" onclick="PaperTrading.toggleTradeBook()" title="View Open Positions & History">
+          📋 Trade Book (<span id="paperOpenCount">0</span>)
+        </button>
+        <button class="btn-reset-wallet" onclick="PaperTrading.resetWallet()" title="Reset to ₹1,00,000">
+          🔄
+        </button>
+      </div>
+
       <div class="status-badge">
         <span class="pulse-dot"></span>
         <span id="marketClock">--:--:--</span>
@@ -168,6 +190,18 @@
           </div>
         </div>
 
+        <!-- 1-Click Paper Trading Quick Execution Buttons -->
+        <div class="paper-action-btns">
+          <button class="paper-btn buy btn-paper-buy" id="btnPaperBuy" onclick="executeCurrentPaperTrade('BUY')">
+            <span class="btn-main-label">⚡ PAPER BUY (LONG)</span>
+            <span class="btn-sub-label" id="intradayBuySub">Target 1 & SL Managed</span>
+          </button>
+          <button class="paper-btn sell btn-paper-short" id="btnPaperShort" onclick="executeCurrentPaperTrade('SHORT')">
+            <span class="btn-main-label">⚡ PAPER SHORT</span>
+            <span class="btn-sub-label" id="intradayShortSub">Target 1 & SL Managed</span>
+          </button>
+        </div>
+
         <!-- Technical Checklist -->
         <div class="scalp-checklist">
           <div class="check-item">
@@ -196,6 +230,72 @@
 
   </main>
 
+  <!-- ============ TRADE BOOK MODAL ============ -->
+  <div class="paper-modal-overlay" id="paperTradeBookModal">
+    <div class="paper-modal-box">
+      <div class="paper-modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <h2>📋 Virtual Trade Book & Portfolio</h2>
+          <span class="scalper-tag" style="background:rgba(16,185,129,0.15);color:#10B981;border-color:#10B981;">Paper Simulator</span>
+        </div>
+        <button class="btn-modal-close" onclick="PaperTrading.toggleTradeBook()">✕</button>
+      </div>
+
+      <div class="paper-modal-tabs">
+        <button class="paper-tab-btn active" onclick="switchPaperTab('open')">Open Positions (<span id="paperTabOpenCount">0</span>)</button>
+        <button class="paper-tab-btn" onclick="switchPaperTab('history')">Trade History</button>
+      </div>
+
+      <!-- Open Positions Tab -->
+      <div class="paper-tab-content active" id="tabOpenPositions">
+        <div class="table-scroll">
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Entry Price</th>
+                <th>Live Price</th>
+                <th>Target 1</th>
+                <th>Stop Loss</th>
+                <th>Live P&L</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="paperOpenPositionsBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Trade History Tab -->
+      <div class="paper-tab-content" id="tabTradeHistory">
+        <div class="table-scroll">
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Entry Price</th>
+                <th>Exit Price</th>
+                <th>Realized P&L</th>
+                <th>Exit Trigger</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="paperHistoryBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="paper_trading.js"></script>
   <script src="intraday.js"></script>
 </body>
 </html>

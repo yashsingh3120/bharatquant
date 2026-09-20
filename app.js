@@ -1089,6 +1089,12 @@
     if (rrEl && pred.rr) rrEl.textContent = pred.rr;
     if (regimeEl && pred.factors?.regimeStatus) regimeEl.textContent = pred.factors.regimeStatus;
 
+    // Update Paper Trade Button labels
+    const btnBuySub = document.getElementById('btnBuyTargetSub');
+    const btnSellSub = document.getElementById('btnSellTargetSub');
+    if (btnBuySub && pred.t1) btnBuySub.textContent = `T1: ₹${pred.t1.toFixed(1)} | SL: ₹${pred.sl.toFixed(1)}`;
+    if (btnSellSub && pred.t1) btnSellSub.textContent = `T1: ₹${pred.t1.toFixed(1)} | SL: ₹${pred.sl.toFixed(1)}`;
+
     // Generate reasoning
     const features = state.features[symbol];
     if (features) {
@@ -1304,6 +1310,17 @@
       }));
     }
 
+    // Update Paper Trading live prices
+    if (window.PaperTrading) {
+      const priceMap = {};
+      Object.keys(state.stockData).forEach(sym => {
+        if (state.stockData[sym] && state.stockData[sym].price) {
+          priceMap[sym] = state.stockData[sym].price;
+        }
+      });
+      window.PaperTrading.updateLivePrices(priceMap);
+    }
+
     // Update selected stock detail if open
     if (state.selectedStock) {
       const sd = state.stockData[state.selectedStock];
@@ -1499,6 +1516,17 @@
     renderStockCards();
     updateTicker();
 
+    // Initial feed to Paper Trading Engine
+    if (window.PaperTrading) {
+      const priceMap = {};
+      Object.keys(state.stockData).forEach(sym => {
+        if (state.stockData[sym] && state.stockData[sym].price) {
+          priceMap[sym] = state.stockData[sym].price;
+        }
+      });
+      window.PaperTrading.updateLivePrices(priceMap);
+    }
+
     // Start 2-minute auto-refresh cycle
     startCountdownTimer();
     addSystemLog('⏱ Auto-refresh enabled: predictions update every 30 seconds');
@@ -1522,4 +1550,55 @@
   } else {
     init();
   }
+
+  // ── Global Positional Paper Trading Handlers ──────────────
+  window.executeCurrentPositionalTrade = function(side) {
+    if (!window.PaperTrading) return;
+    const sym = state.selectedStock;
+    if (!sym) {
+      alert('Please select a stock card from the dashboard first.');
+      return;
+    }
+    const sd = state.stockData[sym];
+    const pred = state.predictions[sym];
+    const price = sd?.price || ((pred?.entryMin && pred?.entryMax) ? (pred.entryMin + pred.entryMax) / 2 : null);
+    if (!price) {
+      alert('Live price not ready for ' + sym + '. Please wait a moment.');
+      return;
+    }
+    const sl = pred?.sl || (side === 'BUY' ? +(price * 0.98).toFixed(2) : +(price * 1.02).toFixed(2));
+    const t1 = pred?.t1 || (side === 'BUY' ? +(price * 1.04).toFixed(2) : +(price * 0.96).toFixed(2));
+    const t2 = pred?.t2 || (side === 'BUY' ? +(price * 1.08).toFixed(2) : +(price * 0.92).toFixed(2));
+
+    window.PaperTrading.openPosition(
+      sym,
+      side,
+      price,
+      sl,
+      t1,
+      t2,
+      25000 // default virtual position size
+    );
+  };
+
+  window.switchPaperTab = function(tabName) {
+    document.querySelectorAll('.paper-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.paper-tab-content').forEach(c => c.classList.remove('active'));
+    
+    if (tabName === 'open') {
+      const btn = document.querySelector('.paper-tab-btn:nth-child(1)');
+      if (btn) btn.classList.add('active');
+      const tab = document.getElementById('tabOpenPositions');
+      if (tab) tab.classList.add('active');
+    } else {
+      const btn = document.querySelector('.paper-tab-btn:nth-child(2)');
+      if (btn) btn.classList.add('active');
+      const tab = document.getElementById('tabTradeHistory');
+      if (tab) tab.classList.add('active');
+    }
+    if (window.PaperTrading) {
+      window.PaperTrading.renderTradeBook();
+    }
+  };
+
 })();
